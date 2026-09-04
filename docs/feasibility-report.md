@@ -166,11 +166,12 @@ Ironfang deploys its own WebAssembly build (above); both paths use the same QML.
 
 ## Audio on WebAssembly
 
-Clayground's `Music` type blocks QML component creation on WebAssembly (bisected with the Web
-Runtime: any `Music`, even `lazyLoading: true`, stalls the page; 17 eager `Sound` objects load
-fine). Reported as [MisterGC/clayground#216](https://github.com/MisterGC/clayground/issues/216).
-Ironfang plays its ambient loop as a `Sound` re-triggered by a `Timer` at the clip length, which
-works on both targets.
+Clayground's `Music` type blocks QML component creation on WebAssembly, and `Sound.play()`
+freezes the page at the first playback (bisected with the Web Runtime: objects load fine, the
+first `play()` after the Start click hangs the main thread; the same QML is fine on desktop).
+Reported as [MisterGC/clayground#216](https://github.com/MisterGC/clayground/issues/216).
+Ironfang therefore runs **silent on WebAssembly** (`AudioController.platformSupported`) and
+plays its ambient loop on desktop as a `Sound` re-triggered by a `Timer`.
 
 ## Known limitations
 

@@ -5,7 +5,10 @@ import Clayground.Sound
 
 Item {
     id: audio
-    property bool soundOn: true
+    // Clayground.Sound playback freezes the page on WebAssembly (Sound.play() and Music alike,
+    // MisterGC/clayground#216), so the web build runs silent until that is fixed upstream.
+    readonly property bool platformSupported: Qt.platform.os !== "wasm"
+    property bool soundOn: platformSupported
     property real sfxVolume: 0.8
     property real musicVolume: 0.35
     property bool musicPlaying: false
@@ -22,6 +25,7 @@ Item {
     Component { id: soundComp; Sound { volume: audio.sfxVolume; lazyLoading: false } }
 
     Component.onCompleted: {
+        if (!platformSupported) return
         const map = {}
         for (const n of _names)
             map[n] = soundComp.createObject(audio, { source: Qt.resolvedUrl("assets/audio/" + n + ".wav") })
@@ -29,7 +33,7 @@ Item {
     }
 
     function play(name, volumeScale) {
-        if (!soundOn) return
+        if (!soundOn || !platformSupported) return
         const s = _sounds[name]
         if (!s) return
         const now = Date.now() / 1000
@@ -43,19 +47,23 @@ Item {
     // Ambient loop as a re-triggered Sound: Clayground's Music type stalls QML creation on
     // WebAssembly (see the Clayground issue linked in docs/feasibility-report.md), while Sound
     // works everywhere. The loop file is 22.86 s; the timer restarts it just before it ends.
-    Sound {
-        id: musicSound
-        source: Qt.resolvedUrl("assets/audio/ambient_loop.wav")
-        volume: audio.musicVolume
-        lazyLoading: true
+    Loader {
+        id: musicLoader
+        active: audio.platformSupported
+        sourceComponent: Sound {
+            source: Qt.resolvedUrl("assets/audio/ambient_loop.wav")
+            volume: audio.musicVolume
+            lazyLoading: true
+        }
     }
+    readonly property var musicSound: musicLoader.item
     Timer {
         id: musicLoop
         interval: 22700; repeat: true; running: false
-        onTriggered: musicSound.play()
+        onTriggered: if (musicSound) musicSound.play()
     }
-    function startMusic() { if (!soundOn) return; musicSound.play(); musicLoop.restart(); musicPlaying = true }
-    function stopMusic() { musicLoop.stop(); musicSound.stop(); musicPlaying = false }
-    function pauseMusic() { musicLoop.stop(); musicSound.stop() }
-    function resumeMusic() { if (soundOn && musicPlaying) { musicSound.play(); musicLoop.restart() } }
+    function startMusic() { if (!soundOn || !musicSound) return; musicSound.play(); musicLoop.restart(); musicPlaying = true }
+    function stopMusic() { musicLoop.stop(); if (musicSound) musicSound.stop(); musicPlaying = false }
+    function pauseMusic() { musicLoop.stop(); if (musicSound) musicSound.stop() }
+    function resumeMusic() { if (soundOn && musicPlaying && musicSound) { musicSound.play(); musicLoop.restart() } }
 }

@@ -573,7 +573,7 @@ Item {
 
     // ---- 3D scene ----------------------------------------------------------------------------
     GameWorld { id: world; anchors.fill: parent; mapSizeX: game.mapSize; mapSizeZ: game.mapSize; visible: game.phase !== "showcase" }
-    AudioController { id: audio; soundOn: Qt.application.arguments.indexOf("--mute") < 0 && !game.autotest }
+    AudioController { id: audio; soundOn: platformSupported && Qt.application.arguments.indexOf("--mute") < 0 && !game.autotest }
     GridPathfinder { id: pathfinder; diagonal: true }
 
     // ---- input -------------------------------------------------------------------------------
@@ -646,7 +646,9 @@ Item {
         case Qt.Key_P: if (phase === "playing") phase = "paused"; else if (phase === "paused") phase = "playing"; break
         case Qt.Key_F: hud.showFps = !hud.showFps; perf.visible = !perf.visible; break
         case Qt.Key_M: useModels = !useModels; break
-        case Qt.Key_N: audio.soundOn = !audio.soundOn; if (!audio.soundOn) audio.stopMusic(); else if (phase === "playing") audio.startMusic(); flash(audio.soundOn ? "sound on" : "sound off"); break
+        case Qt.Key_N:
+            if (!audio.platformSupported) { flash("audio is not available in the browser build yet (Clayground #216)"); break }
+            audio.soundOn = !audio.soundOn; if (!audio.soundOn) audio.stopMusic(); else if (phase === "playing") audio.startMusic(); flash(audio.soundOn ? "sound on" : "sound off"); break
         case Qt.Key_BracketLeft: simSpeed = Math.max(1, simSpeed / 2); flash("speed x" + simSpeed); break
         case Qt.Key_BracketRight: simSpeed = Math.min(8, simSpeed * 2); flash("speed x" + simSpeed); break
         case Qt.Key_Space: if (playerFortress) rig.focusOn(Qt.vector3d(playerFortress.x, 0, playerFortress.z)); break

@@ -132,8 +132,9 @@ an entry in `config/assets.js` has no model). Open items:
   the rigs; the archer's arrow is the only prop in use.
 * No LODs, uncompressed 1024² PNG textures (about 47 MB of assets on the web), no shadows.
 * Effects are flashes and rings; no particles. Clip loops are untuned (`Idle`/`Walk` seams).
-* Audio: Clayground's `Music` type stalls on WebAssembly (clayground#216), so the loop is a
-  re-triggered `Sound`; there is a small seam at the loop point.
+* Audio: Clayground.Sound playback (`Sound.play()` and `Music`) freezes the page on WebAssembly
+  (clayground#216), so the **web build is silent** for now; desktop has full audio (the loop is a
+  re-triggered `Sound`, with a small seam at the loop point).
 * Manual browser input pass on the checklist has not been done by a human yet (the scripted
   match runs in headless Chrome; see `docs/feasibility-report.md`).
 
