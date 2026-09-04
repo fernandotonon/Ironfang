@@ -9,9 +9,13 @@ image, rigged and animated with [QtMeshEditor](https://github.com/fernandotonon/
 then played by a game built on [Clayground](https://github.com/MisterGC/clayground)
 (Qt 6 / QML / Qt Quick 3D).
 
-> **Project status: Milestone 0 — feasibility spike.** See
-> [`docs/milestone-0-plan.md`](docs/milestone-0-plan.md) and
-> [`docs/feasibility-report.md`](docs/feasibility-report.md). Gameplay starts after the gate passes.
+> **Project status: playable vertical slice** (Milestones 0–4 done, 5 in progress). Play it at
+> **https://fernandotonon.github.io/Ironfang/** — feasibility: [`docs/feasibility-report.md`](docs/feasibility-report.md),
+> design: [`docs/architecture.md`](docs/architecture.md), numbers: [`docs/balancing.md`](docs/balancing.md).
+
+**The match:** select goblin workers and send them to an iron deposit; spend iron at the Clan
+Fortress (workers) and the War Foundry (warriors, archers, an ogre); hold off the enemy waves;
+destroy the Enemy Fortress. Victory/defeat overlay, Play Again without reloading.
 
 ## Requirements
 
@@ -62,15 +66,19 @@ Use a native (or universal) CMake for `ctest` as well: an Intel `ctest` launches
 `qmltestrunner` as x86_64, which then cannot load the arm64 plugins. The universal CMake that
 ships with Qt works: `~/Qt/Tools/CMake/CMake.app/Contents/bin/ctest --test-dir build-desktop`.
 
-## Controls (spike)
+## Controls
 
 | Input | Action |
 |---|---|
-| Left click / drag | select unit / box-select · Shift adds |
-| Right click | move order · right-drag orbits the camera |
-| W A S D / arrows, wheel | pan, zoom (toward the cursor) |
-| 1 2 3 4 5 | Idle · Walk · Attack · Hit · Death on the selection |
-| Esc, +, M, F | clear selection · spawn a unit · models/boxes · render stats |
+| Left click / drag | select a unit or building / box-select units · Shift adds or removes |
+| Right click on ground / enemy / deposit / fortress | move · attack · gather (workers) · return iron |
+| W A S D / arrows, wheel, right-drag | pan, zoom toward the cursor, orbit |
+| HUD buttons | produce units (cost · time), cancel, Return iron, Stop |
+| P / Esc | pause / clear selection · Space centres on the fortress |
+| F, N, M, `[` `]` | render stats · sound on/off · models/boxes · sim speed (debug) |
+
+Command line: `--autotest` (scripted match at 8×, logs `AUTOTEST` lines), `--showcase`,
+`--no-models`, `--mute`. In the browser: `index.html?args=--autotest`.
 
 ## Repository layout
 
@@ -82,6 +90,12 @@ tests/          QML TestCase suites (ctest)
 docs/           plan, feasibility report, asset pipeline, asset manifest, test checklist
 external/       clayground submodule
 ```
+
+## Asset showcase & audio
+
+The title screen's **Asset Showcase** puts every unit, building and prop on a turntable with
+clip switching and the asset-contract data (triangles, bones, clips, textures, formats, status).
+All sound is synthesized by `scripts/gen-audio.py` (original, no external samples).
 
 ## Asset workflow in one line each
 

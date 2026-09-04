@@ -21,7 +21,11 @@ if "coi-serviceworker" not in html:
     html = re.sub(r"(<head[^>]*>)", r"\1\n" + shim, html, count=1)
 
 args_js = ("arguments: (new URLSearchParams(location.search).get('args') || '')"
-           ".split(' ').filter(Boolean),\n")
+           ".split(' ').filter(Boolean),\n"
+           # Emscripten's preload plugins would decode every preloaded .png/.wav with browser
+           # Image/Audio elements; Qt reads the raw bytes itself, and hundreds of decodes stall
+           # startup (headless Chrome never finishes). Keep preloaded files as plain bytes.
+           "                    noImageDecoding: true,\n                    noAudioDecoding: true,\n")
 if "URLSearchParams(location.search).get('args')" not in html:
     html = html.replace("qtLoad({", "qtLoad({\n                    " + args_js, 1)
 

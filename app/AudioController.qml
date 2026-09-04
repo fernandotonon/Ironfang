@@ -40,14 +40,22 @@ Item {
         s.play()
     }
 
-    Music {
-        id: music
+    // Ambient loop as a re-triggered Sound: Clayground's Music type stalls QML creation on
+    // WebAssembly (see the Clayground issue linked in docs/feasibility-report.md), while Sound
+    // works everywhere. The loop file is 22.86 s; the timer restarts it just before it ends.
+    Sound {
+        id: musicSound
         source: Qt.resolvedUrl("assets/audio/ambient_loop.wav")
         volume: audio.musicVolume
-        loop: true
+        lazyLoading: true
     }
-    function startMusic() { if (soundOn) { music.play(); musicPlaying = true } }
-    function stopMusic() { music.stop(); musicPlaying = false }
-    function pauseMusic() { music.pause() }
-    function resumeMusic() { if (soundOn && musicPlaying) music.play() }
+    Timer {
+        id: musicLoop
+        interval: 22700; repeat: true; running: false
+        onTriggered: musicSound.play()
+    }
+    function startMusic() { if (!soundOn) return; musicSound.play(); musicLoop.restart(); musicPlaying = true }
+    function stopMusic() { musicLoop.stop(); musicSound.stop(); musicPlaying = false }
+    function pauseMusic() { musicLoop.stop(); musicSound.stop() }
+    function resumeMusic() { if (soundOn && musicPlaying) { musicSound.play(); musicLoop.restart() } }
 }

@@ -62,8 +62,12 @@ Build quirks found and fixed (all captured in `CMakePresets.json` / `CMakeLists.
 * `QtQuick3D.AssetUtils.RuntimeLoader` (GLB parsed at runtime) is linked into both builds as
   the alternative path but not used: balsam gives compiled QML, per-clip control and no
   glTF parsing in the browser.
-* Runtime assets are compiled into the binary as Qt resources (`qrc:/assets/runtime/...`); the
-  same relative layout works when the QML is served next to the Clayground Web Runtime.
+* Runtime assets are compiled into the desktop binary as Qt resources (`qrc:/assets/runtime/...`).
+  On WebAssembly they are **not** embedded: `scripts/build-wasm.sh` ships them as files and Qt's
+  loader `preload` option fetches them into the in-memory filesystem (`/game/assets/...`, manifest
+  `ironfang-assets.json`); the app reads them as `file:///game/...`. The wasm shrank from 40 to
+  37 MB and assets download in parallel and cache independently. The Clayground Web Runtime path
+  uses the same convention (`assets-manifest.json`, PR #215).
 
 ## Texture format and size
 
@@ -148,10 +152,18 @@ assembles the no-build-step site (`web-runtime/Main.qml` sets `assetBase: "file:
 (`docs/screenshots/web-runtime-orc.png`). Until a Clayground release ships the change,
 Ironfang deploys its own WebAssembly build (above); both paths use the same QML.
 
+## Audio on WebAssembly
+
+Clayground's `Music` type blocks QML component creation on WebAssembly (bisected with the Web
+Runtime: any `Music`, even `lazyLoading: true`, stalls the page; 17 eager `Sound` objects load
+fine). Reported as [MisterGC/clayground#216](https://github.com/MisterGC/clayground/issues/216).
+Ironfang plays its ambient loop as a `Sound` re-triggered by a `Timer` at the clip length, which
+works on both targets.
+
 ## Known limitations
 
-* Runtime assets are baked into the 40 MB wasm; every new unit type adds ~4.7 MB. Serving
-  `assets/runtime` as separate files (lazy fetch) is the obvious next step for load time.
+* Assets are separate files now (47 MB of models/textures + 37 MB wasm); a KTX2/WebP texture
+  pass would roughly halve the asset download.
 * Textures are PNG (no KTX2); a texture-compression pass is an external tool.
 * Idle/Walk loop seams and clip timing are untuned; `Death` holds the last frame (no fade).
 * Only the multithreaded WASM flavour was built and measured; single-threaded (no COI headers
