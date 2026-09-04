@@ -131,11 +131,22 @@ development were caused by hung app instances sharing the GPU, not by the scene.
 ## Clayground Web Runtime (no-local-toolchain path)
 
 The prebuilt runtime (`clayground-starter.zip`, v2026.6 = Qt 6.10.1) can host everything in
-this spike except skeletal animation: it links `QtQuick3D` + `QtQuick3D.Helpers` but neither
-`QtQuick.Timeline` (balsam clips) nor `QtQuick3D.AssetUtils` (`RuntimeLoader`).
-Candidate upstream change (two lines each in `tools/webdojo/CMakeLists.txt` `LINK_LIBS` and
-`tools/webdojo/QmlModules.qml`). Until then Ironfang ships its own runtime build (this report);
-the game QML stays runtime-loadable (Item-rooted `IronfangGame.qml`, `qmldir`, relative asset URLs).
+this spike except the authored 3D models, for two reasons found while testing:
+
+1. it links `QtQuick3D` + `QtQuick3D.Helpers` but not `QtQuick.Timeline` (balsam clips) nor
+   `QtQuick3D.AssetUtils` (`RuntimeLoader`);
+2. Qt opens meshes, textures, `.qad` keyframes and GLBs with `QFile`, which cannot read from a
+   URL - served over http, `Model { source: "meshes/x.mesh" }` renders nothing and
+   `RuntimeLoader` reports `IO Error: File not found` without any request being made.
+
+Fix contributed upstream: **[MisterGC/clayground#215](https://github.com/MisterGC/clayground/pull/215)**
+links both modules and lets the app shell preload files listed in an `assets-manifest.json`
+into the runtime's in-memory filesystem (`/game/`), referenced as `file:///game/<path>`.
+Verified here with a locally built runtime: `scripts/pack-web-runtime.sh <starter-dir>`
+assembles the no-build-step site (`web-runtime/Main.qml` sets `assetBase: "file:///game/"`),
+95 asset files preload, the rigged Orc loads with all five clips, 60 FPS, no console errors
+(`docs/screenshots/web-runtime-orc.png`). Until a Clayground release ships the change,
+Ironfang deploys its own WebAssembly build (above); both paths use the same QML.
 
 ## Known limitations
 
@@ -162,7 +173,7 @@ the game QML stays runtime-loadable (Item-rooted `IronfangGame.qml`, `qmldir`, r
 | 5 | Navigation around an obstacle | ✅ A* over 60×60 grid, 40/40 paths around the building, 0 units in obstacles |
 | 6 | Forty representative units usable in the browser | ✅ 60 FPS (cap) with 40 animated Orcs walking, ≈1 ms/step |
 | 7 | Static hosting documented | ✅ headers, MIME, compression, cache, COI shim, Pages script |
-| 8 | No architectural blocker | ✅ none found; upstream niceties: clayinit scope, Web Runtime modules |
+| 8 | No architectural blocker | ✅ none found; upstream: Web Runtime PR #215 (merged path to no-toolchain deploys), clayinit scope note |
 
 **Recommendation: proceed to Milestone 1** (interaction prototype) after review. Suggested
 first tasks: serve runtime assets as files instead of baking them in, add a real-browser manual
