@@ -23,6 +23,9 @@ Item {
     property var assetConfig: ({ units: Assets.units })
     property bool assetsLoaded: false
     property bool useModels: Qt.application.arguments.indexOf("--no-models") < 0
+    // Where model files live. "" = relative to the QML (qrc:/ in the compiled app);
+    // the Clayground Web Runtime preloads them into its filesystem -> "file:///game/".
+    property string assetBase: ""
     property string defaultUnitType: "orc_warrior"
 
     property var units: []                      // UnitView objects (imperatively created)
@@ -58,6 +61,7 @@ Item {
             camYaw: rig.yaw
             camPitch: rig.pitch
             useModel: game.useModels
+            assetBase: game.assetBase
         }
     }
 

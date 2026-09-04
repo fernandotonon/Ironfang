@@ -16,6 +16,11 @@ const opt = (name, def) => { const i = args.indexOf(name); return i >= 0 ? args[
 const seconds = Number(opt("--seconds", 40));
 const out = opt("--out", "browser-check.png");
 const chrome = opt("--chrome", process.env.CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome");
+// --probe-modules "QtQuick.Timeline QtQuick3D.AssetUtils": after the wait, ask a Clayground Web
+// Runtime page (window.clayground.loadQml) to load a snippet importing each module.
+const probeModules = (opt("--probe-modules", "") || "").split(/\s+/).filter(Boolean);
+// --probe-qml file.qml: load an arbitrary QML snippet into the Web Runtime after the wait.
+const probeQmlFile = opt("--probe-qml", "");
 const port = 9333;
 
 const proc = spawn(chrome, [
@@ -59,6 +64,18 @@ try {
   t0 = Date.now();
   await send("Page.navigate", { url });
   await sleep(seconds * 1000);
+  if (probeQmlFile) {
+    const qml = (await import("node:fs")).readFileSync(probeQmlFile, "utf8");
+    console.log("probing qml:", probeQmlFile);
+    await send("Runtime.evaluate", { expression: `window.clayground.loadQml(${JSON.stringify(qml)})`, awaitPromise: true });
+    await sleep(12000);
+  }
+  if (probeModules.length) {
+    const qml = probeModules.map(m => `import ${m}`).join("\n") + '\nimport QtQuick\nItem { Component.onCompleted: console.log("PROBE MODULES OK") }';
+    console.log("probing modules:", probeModules.join(" "));
+    await send("Runtime.evaluate", { expression: `window.clayground.loadQml(${JSON.stringify(qml)})`, awaitPromise: true });
+    await sleep(8000);
+  }
   const iso = await send("Runtime.evaluate", { expression: "JSON.stringify({iso: window.crossOriginIsolated, sab: typeof SharedArrayBuffer !== 'undefined', ua: navigator.userAgent})", returnByValue: true });
   console.log("isolation:", iso.result.value);
   const mem = await send("Runtime.evaluate", { expression: "performance.memory ? JSON.stringify({usedJSHeapMB: Math.round(performance.memory.usedJSHeapMB ?? performance.memory.usedJSHeapSize/1048576)}) : 'n/a'", returnByValue: true });

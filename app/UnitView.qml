@@ -15,6 +15,7 @@ Node {
     property var typeDef: ({})               // entry from config/assets.json
     readonly property bool isUnit: true
     property bool useModel: true              // false forces the placeholder
+    property string assetBase: ""             // "" = relative to this file; or e.g. "file:///game/"
 
     // ---- simulation state -----------------------------------------------------------------
     // (x, z) of this Node are the ground-plane position in metres (y stays 0)
@@ -70,7 +71,8 @@ Node {
     Loader3D {
         id: modelLoader
         active: root.useModel && root.typeDef.model !== undefined && root.typeDef.model !== ""
-        source: active ? Qt.resolvedUrl(root.typeDef.model) : ""
+        source: !active ? "" : (root.assetBase ? root.assetBase + root.typeDef.model
+                                               : Qt.resolvedUrl(root.typeDef.model))
         scale: Qt.vector3d(root.modelScale, root.modelScale, root.modelScale)
         y: (root.typeDef.footOffset || 0) * root.modelScale
         onLoaded: {

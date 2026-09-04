@@ -84,6 +84,10 @@ def main():
     ap.add_argument("--balsam")
     ap.add_argument("--one-shot", default="Attack,Hit,Death,Gather",
                     help="comma list of clips that play once")
+    ap.add_argument("--inline-keyframes", action="store_true",
+                    help="balsam --disable-useBinaryKeyframes: keyframes inline in the QML instead of "
+                         "animations/*.qad files. Needed when the QML is served over HTTP (Clayground "
+                         "Web Runtime): QtQuick.Timeline reads keyframeSource with QFile, local/qrc only.")
     a = ap.parse_args()
 
     name = a.name or os.path.splitext(os.path.basename(a.glb))[0]
@@ -102,7 +106,10 @@ def main():
 
     for stale in ("meshes", "maps", "animations"):
         shutil.rmtree(os.path.join(a.out_dir, stale), ignore_errors=True)
-    subprocess.run([balsam, staged, "-o", a.out_dir], check=True)
+    cmd = [balsam, staged, "-o", a.out_dir]
+    if a.inline_keyframes:
+        cmd.insert(1, "--disable-useBinaryKeyframes")
+    subprocess.run(cmd, check=True)
     shutil.rmtree(stage)
 
     qml = os.path.join(a.out_dir, name + ".qml")
