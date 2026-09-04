@@ -1,0 +1,3 @@
+[submodule "external/clayground"]
+	path = external/clayground
+	url = https://github.com/MisterGC/clayground.git

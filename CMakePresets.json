@@ -1,0 +1,54 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTING": "ON",
+        "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_IGNORE_PREFIX_PATH": "/usr/local"
+      }
+    },
+    {
+      "name": "desktop",
+      "displayName": "Desktop (Qt from QT_ROOT env, default ~/Qt/6.11.1/macos)",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build-desktop",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "$env{QT_ROOT}",
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "OPENSSL_ROOT_DIR": "/opt/homebrew/opt/openssl",
+        "GGML_NATIVE": "OFF"
+      }
+    },
+    {
+      "name": "desktop-debug",
+      "displayName": "Desktop Debug",
+      "inherits": "desktop",
+      "binaryDir": "${sourceDir}/build-desktop-debug",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+    },
+    {
+      "name": "wasm",
+      "displayName": "WebAssembly (multithread) - configure with the kit's qt-cmake, see scripts/build-wasm.sh",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build-wasm",
+      "cacheVariables": {
+        "BUILD_TESTING": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "desktop", "configurePreset": "desktop" },
+    { "name": "desktop-debug", "configurePreset": "desktop-debug" },
+    { "name": "wasm", "configurePreset": "wasm" }
+  ],
+  "testPresets": [
+    { "name": "desktop", "configurePreset": "desktop", "output": { "outputOnFailure": true } }
+  ]
+}

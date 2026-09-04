@@ -1,0 +1,13 @@
+# build output
+build*/
+/deploy/
+CMakeUserPresets.json
+.cache/
+# macOS
+.DS_Store
+# QtMeshEditor full-resolution generation sidecars (20 MB each; regenerate with scripts/generate-models.sh)
+assets/qtmesh-projects/sources/
+assets/qtmesh-projects/logs/
+# Web runtime binaries are downloaded, not committed
+/web-runtime/*.wasm
+/web-runtime/*.js

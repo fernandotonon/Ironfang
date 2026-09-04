@@ -1,0 +1,7 @@
+# Needed when the same files are served over HTTP to the Clayground Web Runtime:
+# a directory import cannot be listed remotely, so the sibling types are declared here.
+IronfangGame 1.0 IronfangGame.qml
+RtsCamera 1.0 RtsCamera.qml
+UnitView 1.0 UnitView.qml
+HealthBar3D 1.0 HealthBar3D.qml
+SpikeHud 1.0 SpikeHud.qml
