@@ -53,6 +53,7 @@ clay_app(ironfang
         scripts/Combat.js
         scripts/Gather.js
         scripts/EnemyAI.js
+        scripts/Touch.js
         config/assets.js
         config/balance.js
         config/level.js

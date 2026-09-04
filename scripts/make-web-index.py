@@ -33,6 +33,11 @@ if "URLSearchParams(location.search).get('args')" not in html:
 if os.path.exists(os.path.join(d, "ironfang-assets.json")) and "ironfang-assets.json" not in html:
     html = html.replace("qt: {", "qt: {\n                        preload: ['ironfang-assets.json'],", 1)
 
+# phones/tablets: fill the screen, no pinch-zoom of the page itself (the game handles two fingers)
+if "viewport" not in html:
+    html = re.sub(r"(<head[^>]*>)", r'\1\n<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">'
+                  '\n<style>html,body{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none}</style>', html, count=1)
+
 html = html.replace(f"<title>{app}</title>", "<title>Ironfang: First Siege</title>")
 open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(html)
 print(f"wrote {os.path.join(d, 'index.html')}")

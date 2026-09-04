@@ -18,6 +18,11 @@ Item {
     signal pauseRequested()
     signal stopRequested()
     signal returnIronRequested()
+    signal deselectRequested()
+    signal selectArmyRequested()
+    signal selectWorkersRequested()
+    signal homeRequested()
+    property bool touchMode: false
 
     readonly property color gold: "#e0b24a"
     readonly property color ink: "#f2e2c4"
@@ -38,7 +43,7 @@ Item {
         property bool usable: true
         property color tint: "#3b2d19"
         signal clicked()
-        width: Math.max(88, lbl.implicitWidth + 20); height: sub !== "" ? 44 : 30; radius: 4
+        width: Math.max(hud.touchMode ? 100 : 88, lbl.implicitWidth + 20); height: (sub !== "" ? 44 : 30) + (hud.touchMode ? 10 : 0); radius: 4
         color: !usable ? "#2a2420" : (ma.pressed ? "#7d5a2a" : (ma.containsMouse ? "#5a4222" : tint))
         border.color: usable ? "#c9973b" : "#5a4a3a"; border.width: 1
         opacity: usable ? 1 : 0.6
@@ -201,8 +206,41 @@ Item {
     }
 
     Text {
+        visible: !hud.touchMode
         anchors { right: parent.right; top: parent.top; topMargin: 46; rightMargin: 12 }
         text: "LMB select · drag box · Shift add · RMB order · building selected + RMB = rally point (deposit = auto-gather) · WASD/wheel camera · Esc clear"
         color: "#6f7580"; font.pixelSize: 10
+    }
+
+    // ---- touch toolbar (phones/tablets): big targets for what has no gesture -------------------
+    Column {
+        visible: hud.touchMode
+        anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 8 }
+        spacing: 8
+        component TouchButton: Rectangle {
+            id: tb
+            property string label: ""
+            property string icon: ""
+            signal clicked()
+            width: 64; height: 56; radius: 8
+            color: ma.pressed ? "#7d5a2a" : "#cc2b2418"; border.color: "#c9973b"; border.width: 1
+            Column {
+                anchors.centerIn: parent; spacing: 2
+                Text { text: tb.icon; color: hud.gold; font.pixelSize: 20; anchors.horizontalCenter: parent.horizontalCenter }
+                Text { text: tb.label; color: hud.ink; font.pixelSize: 11; anchors.horizontalCenter: parent.horizontalCenter }
+            }
+            MouseArea { id: ma; anchors.fill: parent; onClicked: tb.clicked() }
+        }
+        TouchButton { icon: "⚔"; label: "Army"; onClicked: hud.selectArmyRequested() }
+        TouchButton { icon: "⛏"; label: "Workers"; onClicked: hud.selectWorkersRequested() }
+        TouchButton { icon: "✕"; label: "Deselect"; onClicked: hud.deselectRequested() }
+        TouchButton { icon: "⌂"; label: "Home"; onClicked: hud.homeRequested() }
+    }
+    Text {
+        visible: hud.touchMode
+        anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 6 }
+        text: hud.selection.length ? "tap ground / enemy / iron to order · tap your unit to select it · drag to box-select · two fingers: pan & zoom"
+                                   : "tap a unit or building to select · drag to box-select · two fingers: pan & zoom"
+        color: "#8b9096"; font.pixelSize: 11
     }
 }

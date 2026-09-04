@@ -68,6 +68,14 @@ is called done. Items marked *(M1+)* are not exercised by the Milestone 0 spike 
 - [ ] Play Again / Restart resets iron, units, buildings and camera without reloading the page.
 - [ ] Easy / Normal / Hard change wave pressure.
 
+## Touch (phone / tablet browser)
+- [ ] Page fills the screen, no browser pinch-zoom of the page; the touch toolbar appears after the first tap.
+- [ ] Tap a goblin → selected; tap an iron deposit → it gathers. Tap a warrior → selection switches. Tap the same lone unit → deselected.
+- [ ] Army / Workers buttons select groups; tap ground → they move; tap an enemy → attack.
+- [ ] One-finger drag on ground box-selects; two-finger drag pans; pinch zooms (no page zoom).
+- [ ] Foundry selected + tap ground → rally flag; Fortress selected + tap deposit → new goblins gather there.
+- [ ] Performance acceptable on the device (note FPS via the F key equivalent: not available - eyeball).
+
 ## Static deployment
 - [ ] `deploy/multithread/` copied to a plain static host (GitHub Pages) loads with `coi-serviceworker.js` (one automatic reload on first visit), and assets (`.mesh`, `.png`, `.qad`) all load (no 404s in the network tab).
 - [ ] Optional: the same QML + `assets/` next to the Clayground Web Runtime starter (`clayground-starter.zip`) — expected to fail on skeletal animation until the runtime links `QtQuick.Timeline` / `QtQuick3D.AssetUtils` (see feasibility report).

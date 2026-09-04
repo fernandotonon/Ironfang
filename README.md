@@ -81,6 +81,19 @@ ships with Qt works: `~/Qt/Tools/CMake/CMake.app/Contents/bin/ctest --test-dir b
 | P / Esc | pause / clear selection · Space centres on the fortress |
 | F, N, M, `[` `]` | render stats · sound on/off · models/boxes · sim speed (debug) |
 
+**Touch (phones / tablets)** — detected automatically on the first touch:
+
+| Gesture | Action |
+|---|---|
+| Tap your unit or building | select it (tap the same single unit again to deselect) |
+| Tap ground / enemy / iron deposit / fortress with units selected | move · attack · gather · return iron |
+| Tap ground or a deposit with a building selected | set its rally point |
+| One-finger drag | box-select · two fingers: pan and pinch-zoom |
+| Toolbar | Army · Workers · Deselect · Home (fortress) · Pause |
+
+Tapping empty ground never clears the selection (that is the most frustrating accidental action
+on a phone); use Deselect.
+
 Command line: `--autotest` (scripted match at 8×, logs `AUTOTEST` lines), `--showcase`,
 `--no-models`, `--mute`. In the browser: `index.html?args=--autotest`.
 

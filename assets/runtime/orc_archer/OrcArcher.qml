@@ -90,8 +90,8 @@ Node {
 
     // Nodes:
     Node {
-        id: a9
-        objectName: "a9"
+        id: orc_Archer_rigged
+        objectName: "Orc Archer_rigged"
         Node {
             id: orc_Archer
             objectName: "Orc Archer"
@@ -192,8 +192,8 @@ Node {
             }
         }
         Model {
-            id: a9_mesh
-            objectName: "a9_mesh"
+            id: orc_Archer_rigged_mesh
+            objectName: "Orc Archer_rigged_mesh"
             source: "meshes/meshes_0__mesh.mesh"
             pickable: true
             skin: skin
@@ -533,13 +533,13 @@ Node {
         objectName: "Idle"
         property real framesPerSecond: 1000
         startFrame: 0
-        endFrame: 2967
+        endFrame: 1834
         currentFrame: 0
         enabled: node.clip === "Idle"
         animations: TimelineAnimation {
-            duration: 2967
+            duration: 1834
             from: 0
-            to: 2967
+            to: 1834
             running: node.clip === "Idle"
             loops: Animation.Infinite
         }
@@ -579,6 +579,11 @@ Node {
             keyframeSource: "animations/rightForeArm_rotation_3.qad"
         }
         KeyframeGroup {
+            target: neck
+            property: "rotation"
+            keyframeSource: "animations/neck_rotation_3.qad"
+        }
+        KeyframeGroup {
             target: rightUpLeg
             property: "rotation"
             keyframeSource: "animations/rightUpLeg_rotation_3.qad"
@@ -593,19 +598,54 @@ Node {
             property: "rotation"
             keyframeSource: "animations/leftUpLeg_rotation_3.qad"
         }
+        KeyframeGroup {
+            target: rightArm
+            property: "rotation"
+            keyframeSource: "animations/rightArm_rotation_3.qad"
+        }
+        KeyframeGroup {
+            target: leftArm
+            property: "rotation"
+            keyframeSource: "animations/leftArm_rotation_3.qad"
+        }
+        KeyframeGroup {
+            target: rightShoulder
+            property: "rotation"
+            keyframeSource: "animations/rightShoulder_rotation_3.qad"
+        }
+        KeyframeGroup {
+            target: leftShoulder
+            property: "rotation"
+            keyframeSource: "animations/leftShoulder_rotation_3.qad"
+        }
+        KeyframeGroup {
+            target: chest
+            property: "rotation"
+            keyframeSource: "animations/chest_rotation_3.qad"
+        }
+        KeyframeGroup {
+            target: spine
+            property: "rotation"
+            keyframeSource: "animations/spine_rotation_3.qad"
+        }
+        KeyframeGroup {
+            target: hips
+            property: "rotation"
+            keyframeSource: "animations/hips_rotation_3.qad"
+        }
     }
     Timeline {
         id: walk_timeline
         objectName: "Walk"
         property real framesPerSecond: 1000
         startFrame: 0
-        endFrame: 967
+        endFrame: 1200
         currentFrame: 0
         enabled: node.clip === "Walk"
         animations: TimelineAnimation {
-            duration: 967
+            duration: 1200
             from: 0
-            to: 967
+            to: 1200
             running: node.clip === "Walk"
             loops: Animation.Infinite
         }

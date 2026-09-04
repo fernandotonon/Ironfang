@@ -90,8 +90,8 @@ Node {
 
     // Nodes:
     Node {
-        id: a9
-        objectName: "a9"
+        id: ogre_rigged
+        objectName: "Ogre_rigged"
         Node {
             id: ogre
             objectName: "Ogre"
@@ -192,8 +192,8 @@ Node {
             }
         }
         Model {
-            id: a9_mesh
-            objectName: "a9_mesh"
+            id: ogre_rigged_mesh
+            objectName: "Ogre_rigged_mesh"
             source: "meshes/meshes_0__mesh.mesh"
             pickable: true
             skin: skin
@@ -430,27 +430,17 @@ Node {
         objectName: "Hit"
         property real framesPerSecond: 1000
         startFrame: 0
-        endFrame: 767
+        endFrame: 1967
         currentFrame: 0
         enabled: node.clip === "Hit"
         animations: TimelineAnimation {
-            duration: 767
+            duration: 1967
             from: 0
-            to: 767
+            to: 1967
             running: node.clip === "Hit"
             loops: 1
             // deferred: the handler usually switches `clip`, which drives `running`
             onFinished: Qt.callLater(function() { node.clipFinished("Hit") })
-        }
-        KeyframeGroup {
-            target: rightFoot
-            property: "rotation"
-            keyframeSource: "animations/rightFoot_rotation_2.qad"
-        }
-        KeyframeGroup {
-            target: leftFoot
-            property: "rotation"
-            keyframeSource: "animations/leftFoot_rotation_2.qad"
         }
         KeyframeGroup {
             target: rightHand
@@ -476,6 +466,11 @@ Node {
             target: rightForeArm
             property: "rotation"
             keyframeSource: "animations/rightForeArm_rotation_2.qad"
+        }
+        KeyframeGroup {
+            target: neck
+            property: "rotation"
+            keyframeSource: "animations/neck_rotation_2.qad"
         }
         KeyframeGroup {
             target: rightUpLeg
@@ -511,6 +506,11 @@ Node {
             target: leftShoulder
             property: "rotation"
             keyframeSource: "animations/leftShoulder_rotation_2.qad"
+        }
+        KeyframeGroup {
+            target: chest
+            property: "rotation"
+            keyframeSource: "animations/chest_rotation_2.qad"
         }
         KeyframeGroup {
             target: spine
@@ -634,13 +634,13 @@ Node {
         objectName: "Walk"
         property real framesPerSecond: 1000
         startFrame: 0
-        endFrame: 967
+        endFrame: 1034
         currentFrame: 0
         enabled: node.clip === "Walk"
         animations: TimelineAnimation {
-            duration: 967
+            duration: 1034
             from: 0
-            to: 967
+            to: 1034
             running: node.clip === "Walk"
             loops: Animation.Infinite
         }

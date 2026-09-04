@@ -15,6 +15,7 @@ import "scripts/Production.js" as Production
 import "scripts/Combat.js" as Combat
 import "scripts/Gather.js" as Gather
 import "scripts/EnemyAI.js" as EnemyAI
+import "scripts/Touch.js" as Touch
 import "config/assets.js" as Assets
 import "config/balance.js" as Balance
 import "config/level.js" as Level
@@ -253,6 +254,37 @@ Item {
     }
 
     readonly property var selectedPlayerUnits: selection.filter(e => e.isUnit && e.team === "player" && e.alive)
+
+    // ---- touch ----------------------------------------------------------------------------
+    // Set when the first touch-synthesized press arrives (or on phone/tablet platforms):
+    // taps become "smart taps", the HUD grows touch buttons. Mouse users are unaffected.
+    property bool touchMode: Qt.platform.os === "android" || Qt.platform.os === "ios"
+
+    // A single tap on the world: select own things, otherwise do the obvious order.
+    function smartTap(sx, sy) {
+        const tapped = entityAtScreen(sx, sy)
+        const info = {
+            units: selectedPlayerUnits.length,
+            producer: selectedProducer,
+            soleUnit: selection.length === 1 && selection[0].isUnit && selection[0].team === "player" ? selection[0] : null
+        }
+        const d = Touch.decide(tapped, info, nav.groundAt(sx, sy) !== null)
+        switch (d.action) {
+        case "select":   setSelection([d.entity]); break
+        case "deselect": setSelection([]); break
+        case "order":    issueOrder(sx, sy); break
+        case "rally":    setRally(selectedProducer, tapped, nav.groundAt(sx, sy)); break
+        default: break
+        }
+    }
+
+    function selectArmy() {
+        setSelection(units.filter(u => u.alive && u.team === "player" && u.typeId !== "goblin_worker"))
+        if (selection.length === 0) flash("no army yet - produce warriors at the War Foundry")
+    }
+    function selectWorkers() {
+        setSelection(units.filter(u => u.alive && u.team === "player" && u.typeId === "goblin_worker"))
+    }
 
     // ---- commands ----------------------------------------------------------------------------
     readonly property var selectedProducer: {
@@ -654,8 +686,11 @@ Item {
         property real y0: 0
         property real rmbX: 0
         property real rmbY: 0
+        property bool touchPress: false
         onPressed: (m) => {
             game.forceActiveFocus()
+            touchPress = m.source === Qt.MouseEventSynthesizedByQt || m.source === Qt.MouseEventSynthesizedBySystem
+            if (touchPress) game.touchMode = true
             if (m.button === Qt.RightButton) { rmbX = m.x; rmbY = m.y }
             if (nav.begin(m.x, m.y, m.button, m.modifiers) !== "") return
             if (m.button === Qt.LeftButton && game.phase === "playing") {
@@ -663,6 +698,7 @@ Item {
                 selBox.set(x0, y0, m.x, m.y); selBox.visible = false
             }
         }
+        onCanceled: { boxing = false; selBox.visible = false; nav.cancel() }
         onPositionChanged: (m) => {
             if (nav.move(m.x, m.y)) return
             if (boxing) {
@@ -678,11 +714,37 @@ Item {
             boxing = false
             const additive = (m.modifiers & Qt.ShiftModifier) !== 0
             if (selBox.visible) game.selectInRect(x0, y0, m.x, m.y, additive)
+            else if (touchPress) game.smartTap(m.x, m.y)
             else game.selectAt(m.x, m.y, additive)
             selBox.visible = false
         }
         onWheel: (w) => nav.wheel(w.angleDelta.y, w.x, w.y)
     }
+    // Two fingers: pan (translation) and zoom (scale). Grabs the points away from the MouseArea,
+    // which then gets onCanceled and drops any box selection in progress.
+    PinchHandler {
+        id: pinch
+        enabled: game.phase === "playing" || game.phase === "paused"
+        target: null
+        minimumPointCount: 2
+        property real lastScale: 1
+        property point lastT: Qt.point(0, 0)
+        onActiveChanged: { lastScale = 1; lastT = Qt.point(0, 0); if (active) game.touchMode = true }
+        onActiveScaleChanged: {
+            if (!active) return
+            const f = lastScale / activeScale               // fingers apart -> closer -> smaller distance
+            if (f > 0.5 && f < 2) world.rig.zoomBy(f)
+            lastScale = activeScale
+        }
+        onActiveTranslationChanged: {
+            if (!active) return
+            const dx = activeTranslation.x - lastT.x, dy = activeTranslation.y - lastT.y
+            lastT = activeTranslation
+            const perPx = world.rig.worldPerPixel(game.height)
+            world.rig.panBy(-dx * perPx, dy * perPx)
+        }
+    }
+
     Rectangle {
         id: selBox
         visible: false
@@ -741,9 +803,14 @@ Item {
                    : ""
         onProduceRequested: (b, t) => game.produce(b, t)
         onCancelProductionRequested: (b) => game.cancelProduction(b)
+        touchMode: game.touchMode
         onPauseRequested: game.phase = "paused"
         onStopRequested: game.orderStop(game.selectedPlayerUnits)
         onReturnIronRequested: game.orderReturn(game.selectedPlayerUnits, null)
+        onDeselectRequested: game.setSelection([])
+        onSelectArmyRequested: game.selectArmy()
+        onSelectWorkersRequested: game.selectWorkers()
+        onHomeRequested: if (game.playerFortress) world.rig.focusOn(Qt.vector3d(game.playerFortress.x, 0, game.playerFortress.z))
     }
 
     MenuOverlay {

@@ -6,6 +6,7 @@ import "../app/scripts/Production.js" as Production
 import "../app/scripts/Combat.js" as Combat
 import "../app/scripts/Gather.js" as Gather
 import "../app/scripts/EnemyAI.js" as EnemyAI
+import "../app/scripts/Touch.js" as Touch
 import "../app/config/balance.js" as Balance
 
 TestCase {
@@ -176,5 +177,37 @@ TestCase {
         const easy = EnemyAI.create(Balance.enemy, "easy"), hard = EnemyAI.create(Balance.enemy, "hard")
         verify(easy.incomePerSecond < hard.incomePerSecond)
         verify(easy.waveInterval > hard.waveInterval)
+    }
+
+    // ---- touch smart tap --------------------------------------------------------------------------
+    function test_smart_tap_decisions() {
+        const myUnit = { isUnit: true, team: "player", alive: true }
+        const myOther = { isUnit: true, team: "player", alive: true }
+        const fortress = { isBuilding: true, team: "player", alive: true, stats: { dropOff: true }, queue: {} }
+        const foundry = { isBuilding: true, team: "player", alive: true, stats: {}, queue: {} }
+        const enemy = { isUnit: true, team: "enemy", alive: true }
+        const deposit = { isBuilding: true, team: "neutral", alive: true, stats: { resource: true } }
+        const none = { units: 0, producer: null, soleUnit: null }
+        const one = { units: 1, producer: null, soleUnit: myUnit }
+        const many = { units: 3, producer: null, soleUnit: null }
+        const prod = { units: 0, producer: foundry, soleUnit: null }
+        // nothing selected: own things select, everything else is a no-op (never an accidental clear)
+        compare(Touch.decide(myUnit, none, true).action, "select")
+        compare(Touch.decide(null, none, true).action, "none")
+        compare(Touch.decide(enemy, none, true).action, "none")
+        compare(Touch.decide(deposit, none, true).action, "none")
+        // units selected: targets are orders, own units switch selection, same unit deselects
+        compare(Touch.decide(null, many, true).action, "order")
+        compare(Touch.decide(enemy, many, true).action, "order")
+        compare(Touch.decide(deposit, many, true).action, "order")
+        compare(Touch.decide(fortress, many, true).action, "order", "tapping the fortress with units = return iron")
+        compare(Touch.decide(foundry, many, true).action, "select", "tapping another own building selects it")
+        compare(Touch.decide(myOther, one, true).action, "select")
+        compare(Touch.decide(myUnit, one, true).action, "deselect")
+        // producer selected: ground / deposit set the rally point
+        compare(Touch.decide(null, prod, true).action, "rally")
+        compare(Touch.decide(deposit, prod, true).action, "rally")
+        compare(Touch.decide(enemy, prod, true).action, "none")
+        compare(Touch.decide(myUnit, prod, true).action, "select")
     }
 }
