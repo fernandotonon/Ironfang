@@ -136,8 +136,10 @@ Item {
                         if (!p) return ""
                         if (p.isBuilding) {
                             if (p.stats && p.stats.resource) return "Iron left: " + Math.floor(p.iron)
-                            if (p.queue && p.queue.items.length) return "Producing: " + p.queue.items.map(t => hud.game.unitName(t)).join(", ")
-                            return p.team === "enemy" ? "Hostile structure" : "Idle"
+                            void hud.game.tick; void p.rallyRev
+                            const rally = p.rallyTarget ? "Rally: gather at the iron deposit" : (p.rally ? "Rally: point set" : "Rally: none (right-click to set)")
+                            if (p.queue && p.queue.items.length) return "Producing: " + p.queue.items.map(t => hud.game.unitName(t)).join(", ") + "\n" + rally
+                            return p.team === "enemy" ? "Hostile structure" : (p.team === "player" && p.queue ? "Idle · " + rally : "Idle")
                         }
                         if (p.typeId === "goblin_worker") return p.gatherState !== "idle" ? "Gathering  (carrying " + p.carried + ")" : (p.carried ? "Carrying " + p.carried + " iron" : "Idle")
                         return p.order === "attack" ? "Attacking" : (p.path && p.path.length ? "Moving" : "Idle")
@@ -200,7 +202,7 @@ Item {
 
     Text {
         anchors { right: parent.right; top: parent.top; topMargin: 46; rightMargin: 12 }
-        text: "LMB select · drag box · Shift add · RMB order · WASD/wheel camera · Esc clear · F stats"
+        text: "LMB select · drag box · Shift add · RMB order · building selected + RMB = rally point (deposit = auto-gather) · WASD/wheel camera · Esc clear"
         color: "#6f7580"; font.pixelSize: 10
     }
 }

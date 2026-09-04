@@ -255,18 +255,43 @@ Item {
     readonly property var selectedPlayerUnits: selection.filter(e => e.isUnit && e.team === "player" && e.alive)
 
     // ---- commands ----------------------------------------------------------------------------
+    readonly property var selectedProducer: {
+        for (const e of selection) if (e.isBuilding && e.team === "player" && e.queue) return e
+        return null
+    }
+
     function issueOrder(sx, sy) {
         const target = entityAtScreen(sx, sy)
         const g = nav.groundAt(sx, sy)
         const mine = selectedPlayerUnits
         if (mine.length === 0) {
-            if (target && target.isBuilding && target.team === "player" && g) { flash("select units first"); }
+            if (selectedProducer) setRally(selectedProducer, target, g)
             return
         }
         if (target && target.team === "enemy") { orderAttack(mine, target); return }
         if (target && target.isBuilding && target.stats.resource) { orderGather(mine, target, g); return }
         if (target && target.isBuilding && target.team === "player" && target.stats.dropOff) { orderReturn(mine, g); return }
         if (g) orderMove(mine, g)
+    }
+
+    // Rally point of a producer: where finished units go. A deposit as target means new
+    // workers start gathering there (or at the next deposit once it is depleted).
+    function setRally(b, target, g) {
+        if (target && target.isBuilding && target.stats.resource) {
+            b.rallyTarget = target
+            b.rally = Combat.approachPoint(b, target, 1.0)
+            flash(b.typeDef.displayName + ": new " + (b.typeId === "clan_fortress" ? "workers gather at this deposit" : "units rally at the deposit"))
+        } else if (target === b) {
+            b.rallyTarget = null; b.rally = null
+            flash(b.typeDef.displayName + ": rally point cleared")
+        } else if (g) {
+            b.rallyTarget = null
+            b.rally = { x: Math.max(1, Math.min(mapSize - 1, g.x)), z: Math.max(1, Math.min(mapSize - 1, g.z)) }
+            flash(b.typeDef.displayName + ": rally point set")
+        } else return
+        b.rallyRev++
+        world.moveMarker.showAt(b.rally ? b.rally.x : b.x, b.rally ? b.rally.z : b.z, "#e0b24a")
+        audio.play("move")
     }
 
     function orderMove(list, g) {
@@ -529,11 +554,25 @@ Item {
             if (!b.alive || !b.queue) continue
             const done = Production.step(b.queue, dt)
             if (done) {
-                const rp = b.rally || { x: b.x, z: b.z + b.footD / 2 + 2 }
-                const spot = Nav.distribute(rp.x, rp.z, 1 + Math.floor(Math.random() * 6), 1.4)
-                const s = spot[spot.length - 1]
-                const u = spawnUnit(done, b.team, s.x, s.z)
-                if (b.team === "player") { flash(unitName(done) + " ready"); audio.play("produced") }
+                // spawn at the building's edge, then walk to the rally point / start gathering
+                const door = { x: b.x, z: b.z + b.footD / 2 + 1.2 }
+                const spawnSpots = Nav.distribute(door.x, door.z, 6, 1.2)
+                const sp = spawnSpots[Math.floor(Math.random() * spawnSpots.length)]
+                const u = spawnUnit(done, b.team, sp.x, sp.z)
+                if (b.team === "player") {
+                    if (b.rallyTarget && done === "goblin_worker") {
+                        const node = (b.rallyTarget.alive !== false && b.rallyTarget.iron > 0) ? b.rallyTarget : nearestDeposit(u)
+                        if (node) { u.order = "gather"; Gather.start(u, node) }
+                    } else if (b.rally) {
+                        const spots = Nav.distribute(b.rally.x, b.rally.z, 8, 1.4)
+                        const d = spots[Math.floor(Math.random() * spots.length)]
+                        u.order = "move"; u.moveTo(d)
+                    }
+                    flash(unitName(done) + " ready"); audio.play("produced")
+                } else if (b.rally) {
+                    const spots = Nav.distribute(b.rally.x, b.rally.z, 8, 1.4)
+                    u.moveTo(spots[Math.floor(Math.random() * spots.length)])
+                }
             }
         }
     }
@@ -572,7 +611,26 @@ Item {
     }
 
     // ---- 3D scene ----------------------------------------------------------------------------
-    GameWorld { id: world; anchors.fill: parent; mapSizeX: game.mapSize; mapSizeZ: game.mapSize; visible: game.phase !== "showcase" }
+    GameWorld {
+        id: world; anchors.fill: parent; mapSizeX: game.mapSize; mapSizeZ: game.mapSize; visible: game.phase !== "showcase"
+        // rally flag of the selected producer building
+        Node {
+            id: rallyFlag
+            readonly property var b: game.selectedProducer
+            readonly property var rp: b ? (void b.rallyRev, b.rally) : null
+            visible: rp !== null && game.phase === "playing"
+            x: rp ? rp.x : 0
+            z: rp ? rp.z : 0
+            Box3D { width: 0.08; height: 2.2; depth: 0.08; color: "#3a2a1a"; showEdges: false }
+            Box3D { width: 0.9; height: 0.55; depth: 0.05; x: 0.45; y: 1.6; color: "#e0b24a"; useToonShading: true; showEdges: true; edgeColor: "#7a5a2a" }
+            Model {
+                source: "#Cylinder"; y: 0.02
+                scale: Qt.vector3d(0.016, 0.0006, 0.016)
+                materials: PrincipledMaterial { baseColor: "#e0b24a"; opacity: 0.35; alphaMode: PrincipledMaterial.Blend; lighting: PrincipledMaterial.NoLighting }
+                pickable: false
+            }
+        }
+    }
     AudioController { id: audio; soundOn: platformSupported && Qt.application.arguments.indexOf("--mute") < 0 && !game.autotest }
     GridPathfinder { id: pathfinder; diagonal: true }
 
@@ -751,7 +809,10 @@ Item {
             case 1: { const dep = nearestDeposit(workers[0]); orderGather(workers, dep, null); log("workers -> deposit at " + dep.x + "," + dep.z); break }
             case 2: simSpeed = 8; log("speed x8"); break
             case 4: log("gathered so far " + Math.floor(economy.gathered)); screenshot("autotest-gather"); break
-            case 5: { for (let i = 0; i < 3; ++i) produce(playerFoundry, "orc_warrior"); log("queued warriors: " + (playerFoundry.queue ? playerFoundry.queue.items.length : -1)); break }
+            case 5: { for (let i = 0; i < 3; ++i) produce(playerFoundry, "orc_warrior"); log("queued warriors: " + (playerFoundry.queue ? playerFoundry.queue.items.length : -1))
+                      setRally(playerFortress, nearestDeposit(workers[0]), null); produce(playerFortress, "goblin_worker"); log("fortress rally -> deposit, worker queued"); break }
+            case 9: { const gathering = units.filter(u => u.alive && u.team === "player" && u.typeId === "goblin_worker" && u.gatherState !== "idle").length
+                      log("workers gathering: " + gathering + "/" + units.filter(u => u.alive && u.team === "player" && u.typeId === "goblin_worker").length + " (new worker should auto-gather)"); break }
             case 8: log("production check, foundry queue " + queueLength(playerFoundry)); break
             case 12: { log("enemy AI state " + enemyAI.state + " waves " + enemyAI.wavesLaunched + " enemy iron " + Math.floor(enemyAI.economy.iron)); break }
             case 16: { const army = units.filter(u => u.alive && u.team === "player" && u.typeId !== "goblin_worker")

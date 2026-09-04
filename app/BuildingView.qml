@@ -24,7 +24,10 @@ Node {
     property bool untargetable: stats.obstacle === true || stats.resource === true
     property real iron: 0                    // resource nodes
     property var queue: null                 // Production.createQueue() for producers
-    property var rally: null                 // {x, z} where produced units gather
+    property var rally: null                 // {x, z} where produced units gather (null = next to the building)
+    property var rallyTarget: null           // iron deposit: produced workers go gather there
+    readonly property bool hasRally: rally !== null || rallyTarget !== null
+    property int rallyRev: 0                 // bumped when rally changes (rally is a plain object)
     property bool selected: false
     property bool hovered: false
     property real camYaw: 0
