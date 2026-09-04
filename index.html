@@ -54,8 +54,11 @@ SPDX-License-Identifier: LicenseRef-Qt-Commercial OR GPL-3.0-only
 
                 const instance = await qtLoad({
                     arguments: (new URLSearchParams(location.search).get('args') || '').split(' ').filter(Boolean),
+                    noImageDecoding: true,
+                    noAudioDecoding: true,
 
                     qt: {
+                        preload: ['ironfang-assets.json'],
                         onLoaded: () => showUi(screen),
                         onExit: exitData =>
                         {
