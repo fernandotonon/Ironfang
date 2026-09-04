@@ -19,6 +19,10 @@ const chrome = opt("--chrome", process.env.CHROME ?? "/Applications/Google Chrom
 // --probe-modules "QtQuick.Timeline QtQuick3D.AssetUtils": after the wait, ask a Clayground Web
 // Runtime page (window.clayground.loadQml) to load a snippet importing each module.
 const probeModules = (opt("--probe-modules", "") || "").split(/\s+/).filter(Boolean);
+// --click x,y [--after N]: after the wait, click the page at (x,y) (e.g. a Start button) and
+// wait N more seconds before the screenshot - the real user path, not the scripted one.
+const click = (opt("--click", "") || "").split(",").map(Number).filter(n => !Number.isNaN(n));
+const afterClick = Number(opt("--after", 15));
 // --probe-qml file.qml: load an arbitrary QML snippet into the Web Runtime after the wait.
 const probeQmlFile = opt("--probe-qml", "");
 const port = 9333;
@@ -69,6 +73,16 @@ try {
     console.log("probing qml:", probeQmlFile);
     await send("Runtime.evaluate", { expression: `window.clayground.loadQml(${JSON.stringify(qml)})`, awaitPromise: true });
     await sleep(12000);
+  }
+  if (click.length === 2) {
+    console.log(`clicking at ${click[0]},${click[1]}`);
+    for (const type of ["mouseMoved", "mousePressed", "mouseReleased"])
+      await send("Input.dispatchMouseEvent", { type, x: click[0], y: click[1], button: "left", clickCount: 1 });
+    await sleep(afterClick * 1000);
+    try {
+      const alive = await Promise.race([send("Runtime.evaluate", { expression: "1+1", returnByValue: true }), sleep(8000).then(() => null)]);
+      console.log(alive ? "page responsive after click" : "PAGE UNRESPONSIVE after click"); if (!alive) fatal = true;
+    } catch (e) { console.log("PAGE UNRESPONSIVE after click:", e); fatal = true; }
   }
   if (probeModules.length) {
     const qml = probeModules.map(m => `import ${m}`).join("\n") + '\nimport QtQuick\nItem { Component.onCompleted: console.log("PROBE MODULES OK") }';
