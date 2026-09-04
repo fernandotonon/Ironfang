@@ -64,7 +64,7 @@ def patch_qml(path, one_shot):
             block = block.replace(
                 f"loops: {loops}",
                 f"loops: {loops}\n            // deferred: the handler usually switches `clip`, which drives `running`\n"
-                f"            onFinished: Qt.callLater(function() {{ node.clipFinished(\"{name}\") }})")
+                f"            onFinished: Qt.callLater(function() {{ if (node) node.clipFinished(\"{name}\") }})")
         return block
 
     src = re.sub(r"    Timeline \{.*?\n    \}\n", patch_timeline, src, flags=re.S)
