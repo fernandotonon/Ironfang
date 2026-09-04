@@ -28,13 +28,24 @@ clay_app(ironfang
         Main.qml
         QmlModules.qml
         IronfangGame.qml
+        GameWorld.qml
         RtsCamera.qml
         UnitView.qml
+        BuildingView.qml
+        Projectile.qml
         HealthBar3D.qml
-        SpikeHud.qml
+        Hud.qml
+        MenuOverlay.qml
         scripts/NavGrid.js
         scripts/Steering.js
+        scripts/Economy.js
+        scripts/Production.js
+        scripts/Combat.js
+        scripts/Gather.js
+        scripts/EnemyAI.js
         config/assets.js
+        config/balance.js
+        config/level.js
 
     RES_FILES
         ${IRONFANG_RUNTIME_ASSETS}

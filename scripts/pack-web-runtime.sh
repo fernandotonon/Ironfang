@@ -17,7 +17,7 @@ cp "$RT"/RUNTIME-MANIFEST.json "$OUT"/ 2>/dev/null || true
 [ -d "$RT/LICENSES" ] && cp -R "$RT/LICENSES" "$OUT"/
 # the game: runtime entry point + the same QML/JS the compiled app uses
 cp web-runtime/Main.qml "$OUT"/
-cp app/IronfangGame.qml app/RtsCamera.qml app/UnitView.qml app/HealthBar3D.qml app/SpikeHud.qml app/qmldir "$OUT"/
+cp app/IronfangGame.qml app/GameWorld.qml app/RtsCamera.qml app/UnitView.qml app/BuildingView.qml app/Projectile.qml app/HealthBar3D.qml app/Hud.qml app/MenuOverlay.qml app/qmldir "$OUT"/
 mkdir -p "$OUT/scripts" "$OUT/config" && cp app/scripts/*.js "$OUT/scripts/" && cp app/config/*.js "$OUT/config/"
 mkdir -p "$OUT/assets" && cp -R assets/runtime "$OUT/assets/"
 # files Qt opens with QFile (meshes, textures, .qad keyframes): the app shell preloads them

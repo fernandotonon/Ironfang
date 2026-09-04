@@ -63,7 +63,8 @@ def patch_qml(path, one_shot):
         if name in one_shot:
             block = block.replace(
                 f"loops: {loops}",
-                f"loops: {loops}\n            onFinished: node.clipFinished(\"{name}\")")
+                f"loops: {loops}\n            // deferred: the handler usually switches `clip`, which drives `running`\n"
+                f"            onFinished: Qt.callLater(function() {{ node.clipFinished(\"{name}\") }})")
         return block
 
     src = re.sub(r"    Timeline \{.*?\n    \}\n", patch_timeline, src, flags=re.S)

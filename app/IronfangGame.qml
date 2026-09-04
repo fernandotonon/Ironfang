@@ -1,117 +1,192 @@
 // Ironfang: First Siege - game root (an Item, so it runs both inside the desktop Window
 // and when loaded by the Clayground Web Runtime from static files).
-// Milestone 0: feasibility spike - scene, RTS camera, picking, box selection, move orders,
-// grid navigation around obstacles, animated QtMeshEditor units, 40-unit stress test.
+// Composition: GameWorld (3D scene) + entities (UnitView/BuildingView/Projectile, created
+// imperatively) + JS rule modules (Economy, Production, Combat, Gather, EnemyAI, NavGrid,
+// Steering) + Hud + MenuOverlay. A fixed 30 Hz simulation step drives all rules; rendering is
+// frame-driven.
 import QtQuick
 import QtQuick3D
-import QtQuick3D.Helpers
 import Clayground.Canvas3D
 import Clayground.Algorithm
 import "scripts/NavGrid.js" as Nav
 import "scripts/Steering.js" as Steer
+import "scripts/Economy.js" as Economy
+import "scripts/Production.js" as Production
+import "scripts/Combat.js" as Combat
+import "scripts/Gather.js" as Gather
+import "scripts/EnemyAI.js" as EnemyAI
 import "config/assets.js" as Assets
+import "config/balance.js" as Balance
+import "config/level.js" as Level
 
 Item {
     id: game
     focus: true
 
-    // ---- world -------------------------------------------------------------------------
-    readonly property real mapSize: 60          // metres, square map, origin at a corner
+    // ---- configuration ---------------------------------------------------------------------
+    readonly property real mapSize: Level.layout.size
     readonly property real navCell: 1.0
-    readonly property real simStep: 1 / 30      // fixed simulation step (seconds)
-
-    property var assetConfig: ({ units: Assets.units })
-    property bool assetsLoaded: false
+    readonly property real simStep: Balance.match.simStep
+    property int simSpeed: 1                    // debug: steps per step (keys [ ])
     property bool useModels: Qt.application.arguments.indexOf("--no-models") < 0
-    // Where model files live. "" = relative to the QML (qrc:/ in the compiled app);
-    // the Clayground Web Runtime preloads them into its filesystem -> "file:///game/".
-    property string assetBase: ""
-    property string defaultUnitType: "orc_warrior"
+    property string assetBase: ""               // "" = qrc/relative; Web Runtime: "file:///game/"
+    property string difficulty: "normal"
 
-    property var units: []                      // UnitView objects (imperatively created)
+    // ---- match state -----------------------------------------------------------------------
+    property string phase: "title"              // title | playing | paused | victory | defeat
+    property real matchTime: 0
+    property int tick: 0                        // bumps every sim step; HUD bindings depend on it
+    property var economy: Economy.create(0)
+    property real iron: 0
+    property var enemyAI: null
+    property var units: []
+    property var buildings: []
+    property var projectiles: []
     property var selection: []
-    property int nextUnitId: 1
-    property real fps: 0
+    property var hoveredEntity: null
+    property var playerFortress: null
+    property var playerFoundry: null
+    property var enemyFortress: null
+    property int nextEntityId: 1
     property string message: ""
+    property real fps: 0
+    property int unitsLost: 0
+    property int unitsKilled: 0
 
-    signal unitsChanged_()
-
-    // ---- startup -------------------------------------------------------------------------
+    // ---- startup ---------------------------------------------------------------------------
     Component.onCompleted: {
+        if (autotest) startMatch("normal")
+    }
+
+    function startMatch(diff) {
+        difficulty = diff || "normal"
+        clearWorld()
         Nav.init(mapSize, mapSize, navCell)
-        for (const o of obstacles.children)
-            if (o.navBlock) Nav.blockRect(o.x - o.width / 2, o.z - o.depth / 2,
-                                          o.x + o.width / 2, o.z + o.depth / 2)
         pathfinder.columns = Nav.cols
         pathfinder.rows = Nav.rows
+        economy = Economy.create(Balance.match.startIron)
+        iron = economy.iron
+        matchTime = 0
+        tick = 0
+        unitsLost = 0; unitsKilled = 0
+        message = ""
+        buildLevel()
         pathfinder.walkableData = Nav.walkableData()
-        loadAssetConfig()
+        enemyAI = EnemyAI.create(Balance.enemy, difficulty)
+        world.rig.applyState({ px: Level.layout.cameraStart.x, py: 0, pz: Level.layout.cameraStart.z,
+                               yaw: 0, pitch: 52, distance: 42 })
+        phase = "playing"
+        flash("Send your goblins to the iron. Forge an army. Break the enemy fortress.")
     }
 
-    function loadAssetConfig() {
-        assetConfig = { units: Assets.units }
-        assetsLoaded = true
-        spawn(1)
+    function restartMatch() { startMatch(difficulty) }
+
+    function clearWorld() {
+        for (const p of projectiles) p.destroy()
+        for (const u of units) u.destroy()
+        for (const b of buildings) b.destroy()
+        projectiles = []; units = []; buildings = []
+        selection = []; hoveredEntity = null
+        playerFortress = null; playerFoundry = null; enemyFortress = null
     }
 
-    // ---- units ---------------------------------------------------------------------------
+    function buildLevel() {
+        const L = Level.layout
+        playerFortress = spawnBuilding("clan_fortress", "player", L.player.fortress.x, L.player.fortress.z)
+        playerFortress.rally = L.player.rally
+        playerFoundry = spawnBuilding("war_foundry", "player", L.player.foundry.x, L.player.foundry.z)
+        playerFoundry.rally = L.player.rally
+        for (const d of L.player.deposits) spawnBuilding("iron_deposit", "neutral", d.x, d.z)
+        enemyFortress = spawnBuilding("enemy_fortress", "enemy", L.enemy.fortress.x, L.enemy.fortress.z)
+        enemyFortress.rally = L.enemy.rally
+        for (const d of L.enemy.deposits) spawnBuilding("iron_deposit", "neutral", d.x, d.z)
+        for (const o of L.obstacles) spawnBuilding(o.type, "neutral", o.x, o.z)
+        for (const s of L.player.startUnits) spawnUnit(s.type, "player", s.x, s.z)
+        for (const s of L.enemy.startUnits) spawnUnit(s.type, "enemy", s.x, s.z)
+    }
+
+    // ---- entities --------------------------------------------------------------------------
     Component {
         id: unitComp
-        UnitView {
-            camYaw: rig.yaw
-            camPitch: rig.pitch
-            useModel: game.useModels
-            assetBase: game.assetBase
-        }
+        UnitView { camYaw: world.rig.yaw; camPitch: world.rig.pitch; useModel: game.useModels; assetBase: game.assetBase }
+    }
+    Component {
+        id: buildingComp
+        BuildingView { camYaw: world.rig.yaw; camPitch: world.rig.pitch; useModel: game.useModels; assetBase: game.assetBase }
+    }
+    Component {
+        id: projectileComp
+        Projectile { assetBase: game.assetBase; typeDef: Assets.projectiles.arrow }
     }
 
-    function spawn(count) {
-        if (count < 0) count = Math.max(0, -count - units.length)   // "-40" means fill up to 40
-        const list = units.slice()
-        for (let i = 0; i < count; ++i) {
-            const n = list.length
-            const col = n % 8, row = Math.floor(n / 8)
-            const typeId = assetConfig.units[defaultUnitType] ? defaultUnitType : "placeholder"
-            const u = unitComp.createObject(unitRoot, {
-                unitId: nextUnitId++,
-                typeId: typeId,
-                typeDef: assetConfig.units[typeId] || {},
-                x: mapSize * 0.5 - 8 + col * 1.6,
-                z: mapSize * 0.5 + 6 + row * 1.6,
-                heading: 180
-            })
-            list.push(u)
-        }
-        units = list
+    function spawnUnit(typeId, team, x, z) {
+        const u = unitComp.createObject(world.unitRoot, {
+            entityId: nextEntityId++, typeId: typeId, team: team,
+            typeDef: Assets.unit(typeId), stats: Balance.units[typeId] || {},
+            x: x, z: z, heading: team === "enemy" ? 200 : 20
+        })
+        u.moveRequested.connect(onMoveRequested)
+        const list = units.slice(); list.push(u); units = list
+        return u
     }
 
-    function clearUnits() {
-        for (const u of units) u.destroy()
-        units = []
-        setSelection([])
+    function spawnBuilding(typeId, team, x, z) {
+        const stats = Balance.buildings[typeId] || {}
+        const b = buildingComp.createObject(world.buildingRoot, {
+            entityId: nextEntityId++, typeId: typeId, team: team,
+            typeDef: Assets.building(typeId) || {}, stats: stats,
+            x: x, z: z, hp: stats.hp || 0, maxHp: stats.hp || 0, iron: stats.iron || 0,
+            queue: (stats.produces && stats.produces.length) || typeId === "enemy_fortress" ? Production.createQueue(5) : null
+        })
+        if (stats.footprint) Nav.blockRect(x - stats.footprint.w / 2, z - stats.footprint.d / 2,
+                                           x + stats.footprint.w / 2, z + stats.footprint.d / 2)
+        const list = buildings.slice(); list.push(b); buildings = list
+        return b
     }
 
-    function unitOf(obj) {
+    function onMoveRequested(unit, point) {
+        if (!point) { unit.moveAlong([]); return }
+        unit.moveAlong(Nav.findPath(pathfinder, unit.x, unit.z, point.x, point.z))
+    }
+
+    function removeEntity(e) {
+        if (e.isUnit) { units = units.filter(u => u !== e) }
+        else { buildings = buildings.filter(b => b !== e) }
+        if (selection.indexOf(e) >= 0) setSelection(selection.filter(s => s !== e))
+        if (hoveredEntity === e) hoveredEntity = null
+        for (const u of units) if (u.target === e) { u.target = null; if (u.order === "attack") u.order = "idle" }
+        e.destroy()
+    }
+
+    // ---- helpers for the HUD ---------------------------------------------------------------
+    function unitName(t) { return Balance.units[t] ? Balance.units[t].name : t }
+    function unitCost(t) { return Balance.units[t] ? Balance.units[t].cost : 0 }
+    function unitBuildTime(t) { return Balance.units[t] ? Balance.units[t].buildTime : 0 }
+    function queueProgress(b) { void tick; return b && b.queue ? Production.headProgress(b.queue) : 0 }
+    function queueLength(b) { void tick; return b && b.queue ? b.queue.items.length : 0 }
+
+    // ---- selection & picking -----------------------------------------------------------------
+    function entityOf(obj) {
         let o = obj
         for (let guard = 0; o && guard < 12; ++guard) {
-            if (o.isUnit === true) return o
+            if (o.isUnit === true || o.isBuilding === true) return o
             o = o.parent
         }
         return null
     }
 
-    // Ray pick through the 3D view first (QtMeshEditor meshes are pickable), then a
-    // screen-space capsule test as fallback (placeholder boxes, misses between limbs).
-    function unitAtScreen(sx, sy) {
+    function entityAtScreen(sx, sy) {
         const p = nav.pickAt(sx, sy)
         if (p && p.object) {
-            const hit = unitOf(p.object)
-            if (hit) return hit
+            const hit = entityOf(p.object)
+            if (hit && (hit.isUnit ? hit.alive : true)) return hit
         }
+        // screen-space capsule fallback for units (placeholders, gaps between limbs)
         let best = null, bestD = 1e9
         for (const u of units) {
-            const feet = view3d.mapFrom3DScene(u.scenePosition)
-            const head = view3d.mapFrom3DScene(Qt.vector3d(u.scenePosition.x, u.scenePosition.y + u.bodyHeight, u.scenePosition.z))
+            if (!u.alive) continue
+            const feet = world.mapFrom3DScene(u.scenePosition)
+            const head = world.mapFrom3DScene(Qt.vector3d(u.scenePosition.x, u.scenePosition.y + u.bodyHeight, u.scenePosition.z))
             const halfW = Math.max(8, Math.abs(feet.y - head.y) * 0.28)
             const cx = (feet.x + head.x) / 2
             const top = Math.min(feet.y, head.y) - 4, bottom = Math.max(feet.y, head.y) + 4
@@ -124,244 +199,368 @@ Item {
     }
 
     function setSelection(list) {
-        for (const u of selection) u.selected = false
+        for (const e of selection) e.selected = false
         selection = list
-        for (const u of selection) u.selected = true
+        for (const e of selection) e.selected = true
     }
 
     function selectAt(sx, sy, additive) {
-        const u = unitAtScreen(sx, sy)
-        if (!additive) { setSelection(u ? [u] : []); return }
-        if (!u) return
-        const idx = selection.indexOf(u)
+        const e = entityAtScreen(sx, sy)
+        if (!additive) { setSelection(e ? [e] : []); return }
+        if (!e) return
+        const idx = selection.indexOf(e)
         const list = selection.slice()
-        if (idx >= 0) list.splice(idx, 1); else list.push(u)
+        if (idx >= 0) list.splice(idx, 1); else if (!e.isBuilding) list.push(e)
         setSelection(list)
     }
 
     function selectInRect(x0, y0, x1, y1, additive) {
         const left = Math.min(x0, x1), right = Math.max(x0, x1)
         const top = Math.min(y0, y1), bottom = Math.max(y0, y1)
-        const list = additive ? selection.slice() : []
+        const list = additive ? selection.filter(e => e.isUnit) : []
         for (const u of units) {
-            const s = view3d.mapFrom3DScene(Qt.vector3d(u.scenePosition.x, u.scenePosition.y + 0.9, u.scenePosition.z))
-            if (s.x >= left && s.x <= right && s.y >= top && s.y <= bottom && list.indexOf(u) < 0)
-                list.push(u)
+            if (!u.alive || u.team !== "player") continue
+            const s = world.mapFrom3DScene(Qt.vector3d(u.scenePosition.x, u.scenePosition.y + 0.9, u.scenePosition.z))
+            if (s.x >= left && s.x <= right && s.y >= top && s.y <= bottom && list.indexOf(u) < 0) list.push(u)
         }
+        if (list.length === 0 && !additive) { selectAt(x1, y1, false); return }
         setSelection(list)
     }
 
     function updateHover(sx, sy) {
-        const u = unitAtScreen(sx, sy)
-        if (hoveredUnit === u) return
-        if (hoveredUnit) hoveredUnit.hovered = false
-        hoveredUnit = u
-        if (u) u.hovered = true
+        const e = entityAtScreen(sx, sy)
+        if (hoveredEntity === e) return
+        if (hoveredEntity) hoveredEntity.hovered = false
+        hoveredEntity = e
+        if (e) e.hovered = true
     }
-    property var hoveredUnit: null
 
-    function issueMoveOrder(sx, sy) {
+    readonly property var selectedPlayerUnits: selection.filter(e => e.isUnit && e.team === "player" && e.alive)
+
+    // ---- commands ----------------------------------------------------------------------------
+    function issueOrder(sx, sy) {
+        const target = entityAtScreen(sx, sy)
         const g = nav.groundAt(sx, sy)
-        if (!g) return
-        if (selection.length === 0) { flash("nothing selected"); return }
-        const dests = Nav.distribute(g.x, g.z, selection.length, 1.5)
+        const mine = selectedPlayerUnits
+        if (mine.length === 0) {
+            if (target && target.isBuilding && target.team === "player" && g) { flash("select units first"); }
+            return
+        }
+        if (target && target.team === "enemy") { orderAttack(mine, target); return }
+        if (target && target.isBuilding && target.stats.resource) { orderGather(mine, target, g); return }
+        if (target && target.isBuilding && target.team === "player" && target.stats.dropOff) { orderReturn(mine, g); return }
+        if (g) orderMove(mine, g)
+    }
+
+    function orderMove(list, g) {
+        const dests = Nav.distribute(g.x, g.z, list.length, 1.5)
         let unreachable = 0
-        for (let i = 0; i < selection.length; ++i) {
-            const u = selection[i]
+        for (let i = 0; i < list.length; ++i) {
+            const u = list[i]
+            Gather.stop(u); u.target = null; u.order = "move"; u.orderPoint = dests[i]
             const path = Nav.findPath(pathfinder, u.x, u.z, dests[i].x, dests[i].z)
-            if (path.length === 0) { unreachable++; continue }
+            if (path.length === 0) { unreachable++; u.order = "idle"; continue }
             u.moveAlong(path)
         }
-        moveMarker.showAt(g.x, g.z, unreachable === 0 ? "#e0b24a" : "#c9432e")
+        world.moveMarker.showAt(g.x, g.z, unreachable === 0 ? "#e0b24a" : "#c9432e")
         if (unreachable) flash(unreachable + " unit(s): destination unreachable")
     }
 
-    function playOnSelection(clip) {
-        const targets = selection.length ? selection : units
-        for (const u of targets) { u.path = []; u.play(clip) }
+    function orderAttack(list, target) {
+        for (const u of list) {
+            Gather.stop(u)
+            u.order = "attack"; u.target = target; u.chaseOrigin = null; u.repathTimer = 0
+            u.moveTo(Combat.approachPoint(u, target, attackStandoff(u)))
+        }
+        world.moveMarker.showAt(target.x, target.z, "#c9432e")
+        target.hitFlash = Math.max(target.hitFlash, 0.5)
+    }
+
+    function orderGather(list, node, g) {
+        let workers = 0
+        for (const u of list) {
+            if (u.typeId !== "goblin_worker") { if (g) { u.order = "move"; u.target = null; u.moveTo(Nav.distribute(g.x, g.z, 1, 1)[0]) }; continue }
+            u.order = "gather"; u.target = null
+            Gather.start(u, node)
+            workers++
+        }
+        world.moveMarker.showAt(node.x, node.z, "#9ab0c0")
+        if (workers === 0) flash("only goblin workers can gather iron")
+    }
+
+    function orderReturn(list, g) {
+        let returning = 0
+        for (const u of list) {
+            if (u.typeId === "goblin_worker" && Gather.returnHome(u)) { u.order = "gather"; returning++ }
+            else if (g) { Gather.stop(u); u.order = "move"; u.target = null; u.moveTo(g) }
+        }
+        if (returning) flash(returning + " worker(s) returning iron")
+    }
+
+    function orderStop(list) {
+        for (const u of list) { Gather.stop(u); u.target = null; u.order = "idle"; u.stop(); u.play("Idle") }
+    }
+
+    function produce(building, typeId) {
+        if (!building || !building.queue) return
+        const r = Production.enqueue(building.queue, building.typeId, typeId, economy)
+        iron = economy.iron
+        if (!r.ok) flash(r.reason)
+        tick++
+    }
+
+    function cancelProduction(building) {
+        if (!building || !building.queue) return
+        Production.cancelLast(building.queue, economy)
+        iron = economy.iron
+        tick++
+    }
+
+    function attackStandoff(u) {
+        const s = u.stats
+        return s.range > 0 ? (s.preferredRange || s.range * 0.8) : Balance.meleeReach * 0.6
     }
 
     function flash(text) { message = text; messageTimer.restart() }
-    Timer { id: messageTimer; interval: 2200; onTriggered: game.message = "" }
+    Timer { id: messageTimer; interval: 2600; onTriggered: game.message = "" }
 
-    // Screenshot of the whole game item (works offscreen too): key P or the autotest.
-    property int shotIndex: 0
-    function screenshot(name) {
-        const file = (name || ("ironfang-shot-" + (++shotIndex))) + ".png"
-        game.grabToImage(function(result) {
-            const ok = result.saveToFile(file)
-            console.log("SCREENSHOT", file, ok ? "saved" : "FAILED")
-        })
-    }
-
-    // ---- scripted self-test (run with --autotest): spawn, select, order, animate, measure ----
-    readonly property bool autotest: Qt.application.arguments.indexOf("--autotest") >= 0
-    property real stepMs: 0                     // smoothed cost of one Steering.step (ms)
-    property real frameMs: 0                    // smoothed frame time (ms)
-    property int autoStep: 0
-    Timer {
-        running: game.autotest && game.assetsLoaded
-        interval: 1500; repeat: true
-        onTriggered: {
-            const s = game.autoStep++
-            const log = (m) => console.log("AUTOTEST[" + s + "]", m, "| step " + stepMs.toFixed(2) + "ms frame " + frameMs.toFixed(1) + "ms models=" + useModels)
-            switch (s) {
-            case 0: log("units=" + units.length + " fps=" + fps.toFixed(1) + " modelReady=" + (units[0] && units[0].modelReady)); break
-            case 1: screenshot("autotest-1unit"); break
-            case 2: spawn(-20); log("spawned to " + units.length); break
-            case 3: log("units=" + units.length + " fps=" + fps.toFixed(1)); break
-            case 4: spawn(-40); log("spawned to " + units.length); break
-            case 5: log("units=" + units.length + " fps=" + fps.toFixed(1)); break
-            case 6: selectInRect(0, 0, width, height, false); log("selected=" + selection.length)
-                    for (const u of selection) u.moveAlong([]) ; break
-            case 7: {   // order everybody to the far side of the building at (30,22)
-                const dests = Nav.distribute(30, 10, selection.length, 1.5)
-                let ok = 0
-                for (let i = 0; i < selection.length; ++i) {
-                    const p = Nav.findPath(pathfinder, selection[i].x, selection[i].z, dests[i].x, dests[i].z)
-                    if (p.length) { selection[i].moveAlong(p); ok++ }
-                }
-                log("move order: paths=" + ok + "/" + selection.length); break }
-            case 8: log("walking fps=" + fps.toFixed(1)); screenshot("autotest-walk"); break
-            case 10: { let moving = 0; for (const u of units) if (u.path.length) moving++
-                       log("still moving=" + moving + " fps=" + fps.toFixed(1)); break }
-            case 12: { let moving = 0, blocked = 0
-                       for (const u of units) { if (u.path.length) moving++; if (Nav.isBlocked(u.x, u.z)) blocked++ }
-                       log("arrived check: moving=" + moving + " insideObstacle=" + blocked)
-                       playOnSelection("Attack"); log("clip=Attack"); break }
-            case 13: screenshot("autotest-attack"); log("fps=" + fps.toFixed(1)); break
-            case 14: playOnSelection("Idle"); log("clip=Idle"); break
-            case 15: log("DONE units=" + units.length + " fps=" + fps.toFixed(1)); if (Qt.platform.os !== "wasm") Qt.quit(); break
-            }
-        }
-    }
-
-    // ---- simulation clock ----------------------------------------------------------------
+    // ---- simulation --------------------------------------------------------------------------
     property real _acc: 0
     property int _frames: 0
     property real _fpsClock: 0
+    property real stepMs: 0
+    property real frameMs: 0
+
     FrameAnimation {
-        running: true
+        running: game.phase === "playing"
         onTriggered: {
-            const dt = Math.min(frameTime, 0.25)          // tab throttling: never explode
+            const dt = Math.min(frameTime, 0.25)
             game._acc += dt
             let guard = 0
             while (game._acc >= game.simStep && guard++ < 8) {
                 const t0 = Date.now()
-                Steer.step(game.units, game.simStep)
+                for (let s = 0; s < game.simSpeed; ++s) game.step(game.simStep)
                 game.stepMs = game.stepMs * 0.9 + (Date.now() - t0) * 0.1
                 game._acc -= game.simStep
             }
-            game.frameMs = game.frameMs * 0.9 + dt * 1000 * 0.1
             if (guard >= 8) game._acc = 0
-            rig.tickKeyboard(dt)
-            game._frames++
-            game._fpsClock += dt
+            game.frameMs = game.frameMs * 0.9 + dt * 1000 * 0.1
+            world.rig.tickKeyboard(dt)
+            game._frames++; game._fpsClock += dt
             if (game._fpsClock >= 0.5) { game.fps = game._frames / game._fpsClock; game._frames = 0; game._fpsClock = 0 }
         }
     }
+    FrameAnimation {   // camera keys keep working while paused / in menus
+        running: game.phase !== "playing" && game.phase !== "title"
+        onTriggered: world.rig.tickKeyboard(Math.min(frameTime, 0.1))
+    }
 
+    function step(dt) {
+        matchTime += dt
+        tick++
+        Steer.step(units, dt)
+        stepWorkers(dt)
+        stepCombat(dt)
+        stepProduction(dt)
+        stepEnemy(dt)
+        stepProjectiles(dt)
+        stepDeaths(dt)
+        for (const e of units) if (e.hitFlash > 0) e.hitFlash = Math.max(0, e.hitFlash - dt * 3)
+        for (const e of buildings) if (e.hitFlash > 0) e.hitFlash = Math.max(0, e.hitFlash - dt * 3)
+        iron = economy.iron
+        checkEnd()
+    }
+
+    // workers
+    readonly property var gatherCtx: ({
+        stats: Balance.units.goblin_worker,
+        gap: Combat.gap,
+        approach: (w, node) => Combat.approachPoint(w, node, 0.25),
+        findDropOff: (w) => game.playerFortress && game.playerFortress.alive ? game.playerFortress : null,
+        findDeposit: (w) => game.nearestDeposit(w),
+        deposit: (w, amount) => { Economy.deposit(game.economy, amount); game.iron = game.economy.iron }
+    })
+    function nearestDeposit(w) {
+        let best = null, bestD = 1e9
+        for (const b of buildings) {
+            if (!b.stats.resource || b.iron <= 0) continue
+            const d = Combat.gap(w, b)
+            if (d < bestD) { bestD = d; best = b }
+        }
+        return best
+    }
+    function stepWorkers(dt) {
+        for (const u of units) {
+            if (!u.alive || u.typeId !== "goblin_worker" || u.team !== "player") continue
+            if (Gather.isActive(u)) Gather.step(u, dt, gatherCtx)
+        }
+    }
+
+    // combat
+    function hostilesFor(u) {
+        const out = []
+        for (const o of units) if (o.alive && o.team !== u.team) out.push(o)
+        for (const b of buildings) if (b.alive && b.team !== "neutral" && b.team !== u.team && !b.untargetable) out.push(b)
+        return out
+    }
+    property real _aggroClock: 0
+    function stepCombat(dt) {
+        _aggroClock += dt
+        const doAggro = _aggroClock >= 0.4
+        if (doAggro) _aggroClock = 0
+        for (const u of units) {
+            if (!u.alive) continue
+            if (u.cooldown > 0) u.cooldown -= dt
+            // drop dead / invalid targets
+            if (u.target && !Combat.isValidTarget(u.target)) {
+                u.target = null
+                if (u.order === "attack") { u.order = "idle"; u.stop() }
+                if (u.order === "attackMove" && u.primaryTarget && Combat.isValidTarget(u.primaryTarget)) u.target = u.primaryTarget
+            }
+            // auto-acquire (not workers, not while moving on a plain move order)
+            const canAuto = u.typeId !== "goblin_worker" && (u.order === "idle" || u.order === "attackMove")
+            if (doAggro && canAuto) {
+                const near = Combat.acquireTarget(u, hostilesFor(u), Balance.match.aggroRadius)
+                if (near && near !== u.target && !(near.isBuilding && u.order === "attackMove" && u.target && !u.target.isBuilding)) {
+                    if (u.order === "idle") { u.order = "attack"; u.chaseOrigin = { x: u.x, z: u.z }; u.autoAcquired = true }
+                    u.target = near; u.repathTimer = 0
+                }
+            }
+            if (!u.target) continue
+            const stats = u.stats
+            if (Combat.inRange(u, stats, u.target)) {
+                if (u.path.length) u.stop()
+                u.lookAt(u.target)
+                if (u.cooldown <= 0) {
+                    u.cooldown = stats.cooldown
+                    u.play("Attack")
+                    if (stats.range > 0) fireProjectile(u, u.target)
+                    else dealDamage(u, u.target, Combat.damageFor(stats, u.target))
+                }
+            } else {
+                u.repathTimer -= dt
+                if (u.repathTimer <= 0 || u.path.length === 0) {
+                    u.repathTimer = Balance.match.repathInterval
+                    u.moveTo(Combat.approachPoint(u, u.target, attackStandoff(u)))
+                }
+                if (u.autoAcquired && u.chaseOrigin && Combat.dist(u, u.chaseOrigin) > Balance.match.leashRadius) {
+                    u.target = null; u.order = "idle"; u.autoAcquired = false
+                    u.moveTo(u.chaseOrigin)
+                }
+            }
+        }
+    }
+
+    function dealDamage(attacker, target, amount) {
+        if (!target || !target.alive) return
+        const killed = Combat.applyDamage(target, amount)
+        target.hitFlash = 1
+        if (target.isUnit && target.clip !== "Attack" && !killed) target.play("Hit")
+        if (killed) onKilled(target, attacker)
+    }
+
+    function onKilled(target, attacker) {
+        if (target.isUnit) {
+            target.die()
+            if (target.team === "player") unitsLost++; else unitsKilled++
+            if (selection.indexOf(target) >= 0) setSelection(selection.filter(s => s !== target))
+        } else {
+            target.hitFlash = 1
+            if (target.team === "player") flash(target.typeDef.displayName + " destroyed!")
+            else flash("Enemy " + target.typeDef.displayName + " destroyed!")
+        }
+    }
+
+    function fireProjectile(shooter, target) {
+        const p = projectileComp.createObject(world.projectileRoot, {
+            x: shooter.x, z: shooter.z, y_: 1.4, target: target, shooter: shooter,
+            damage: Combat.damageFor(shooter.stats, target), speed: shooter.stats.projectileSpeed || 20
+        })
+        p.aim = Qt.vector3d(target.x, 1.0, target.z)
+        p.hit.connect((t, dmg, s) => game.dealDamage(s, t, dmg))
+        const list = projectiles.slice(); list.push(p); projectiles = list
+    }
+
+    function stepProjectiles(dt) {
+        let finished = false
+        for (const p of projectiles) { p.step(dt); if (p.done) finished = true }
+        if (finished) {
+            const keep = [], gone = []
+            for (const p of projectiles) (p.done ? gone : keep).push(p)
+            projectiles = keep
+            for (const p of gone) p.destroy()
+        }
+    }
+
+    function stepDeaths(dt) {
+        const gone = []
+        for (const u of units) if (!u.alive) { u.deathTimer += dt; if (u.deathTimer >= Balance.match.deathLinger) gone.push(u) }
+        for (const b of buildings) if (!b.alive && b.maxHp > 0) { b.hitFlash = Math.max(b.hitFlash, 0.3) }
+        for (const u of gone) removeEntity(u)
+    }
+
+    // production
+    function stepProduction(dt) {
+        for (const b of buildings) {
+            if (!b.alive || !b.queue) continue
+            const done = Production.step(b.queue, dt)
+            if (done) {
+                const rp = b.rally || { x: b.x, z: b.z + b.footD / 2 + 2 }
+                const spot = Nav.distribute(rp.x, rp.z, 1 + Math.floor(Math.random() * 6), 1.4)
+                const s = spot[spot.length - 1]
+                const u = spawnUnit(done, b.team, s.x, s.z)
+                if (b.team === "player") flash(unitName(done) + " ready")
+            }
+        }
+    }
+
+    // enemy
+    readonly property var enemyWorld: ({
+        get time() { return game.matchTime },
+        get enemyUnits() { return game.units.filter(u => u.alive && u.team === "enemy" && !u.inWave && u.order !== "attack") },
+        get playerFortress() { return game.playerFortress && game.playerFortress.alive ? game.playerFortress : null },
+        canProduce: (t) => game.enemyFortress && game.enemyFortress.alive && game.enemyFortress.queue.items.length === 0,
+        produce: (t) => { game.enemyFortress.queue.items.push(t) },
+        launchWave: (list, target) => {
+            for (const u of list) { u.inWave = true; u.order = "attackMove"; u.primaryTarget = target; u.target = target; u.repathTimer = 0 }
+            game.flash("An enemy war party is marching on your fortress!")
+        }
+    })
+    function stepEnemy(dt) {
+        if (!enemyAI || !enemyFortress || !enemyFortress.alive) return
+        EnemyAI.step(enemyAI, dt, Balance.enemy, enemyWorld)
+        // idle wave units that lost their target head for the fortress again
+        for (const u of units) if (u.alive && u.team === "enemy" && u.inWave && !u.target && playerFortress && playerFortress.alive) {
+            u.order = "attackMove"; u.primaryTarget = playerFortress; u.target = playerFortress
+        }
+    }
+
+    function checkEnd() {
+        if (phase !== "playing") return
+        if (enemyFortress && !enemyFortress.alive) endMatch("victory")
+        else if (playerFortress && !playerFortress.alive) endMatch("defeat")
+    }
+    function endMatch(result) {
+        phase = result
+        setSelection([])
+    }
+
+    // ---- 3D scene ----------------------------------------------------------------------------
+    GameWorld { id: world; anchors.fill: parent; mapSizeX: game.mapSize; mapSizeZ: game.mapSize }
     GridPathfinder { id: pathfinder; diagonal: true }
 
-    // ---- 3D scene --------------------------------------------------------------------------
-    View3D {
-        id: view3d
-        anchors.fill: parent
-        camera: rig.camera
-        environment: SceneEnvironment {
-            clearColor: "#1f232a"
-            backgroundMode: SceneEnvironment.Color
-            antialiasingMode: SceneEnvironment.MSAA
-            antialiasingQuality: SceneEnvironment.Medium
-        }
-
-        RtsCamera { id: rig; mapSizeX: game.mapSize; mapSizeZ: game.mapSize }
-
-        DirectionalLight {
-            eulerRotation.x: -58; eulerRotation.y: -32
-            brightness: 1.35
-            ambientColor: "#3a3f47"
-        }
-        DirectionalLight { eulerRotation.x: -25; eulerRotation.y: 145; brightness: 0.35; color: "#c9d6ff" }
-
-        // ground: rocky slate
-        Model {
-            source: "#Rectangle"
-            eulerRotation.x: -90
-            position: Qt.vector3d(game.mapSize / 2, 0, game.mapSize / 2)
-            scale: Qt.vector3d(game.mapSize / 100, game.mapSize / 100, 1)
-            materials: PrincipledMaterial { baseColor: "#4b4f47"; roughness: 0.95; metalness: 0 }
-            pickable: false
-        }
-        // grid lines every 10 m so movement distance reads
-        Repeater3D {
-            model: 7
-            Model {
-                source: "#Cube"
-                position: Qt.vector3d(index * 10, 0.01, game.mapSize / 2)
-                scale: Qt.vector3d(0.0004, 0.0002, game.mapSize / 100)
-                materials: PrincipledMaterial { baseColor: "#5a5e56"; lighting: PrincipledMaterial.NoLighting }
-                pickable: false
-            }
-        }
-        Repeater3D {
-            model: 7
-            Model {
-                source: "#Cube"
-                position: Qt.vector3d(game.mapSize / 2, 0.01, index * 10)
-                scale: Qt.vector3d(game.mapSize / 100, 0.0002, 0.0004)
-                materials: PrincipledMaterial { baseColor: "#5a5e56"; lighting: PrincipledMaterial.NoLighting }
-                pickable: false
-            }
-        }
-
-        // static obstacles (buildings/rocks placeholders); navBlock marks them in the grid
-        Node {
-            id: obstacles
-            Box3D { property bool navBlock: true; x: 30; z: 22; width: 8; height: 4.5; depth: 6
-                    color: "#6b4f3d"; useToonShading: true; showEdges: true; edgeColor: "#2a1e16"; edgeThickness: 1.5 }
-            Box3D { property bool navBlock: true; x: 16; z: 38; width: 3; height: 1.6; depth: 3
-                    color: "#5d6066"; useToonShading: true; showEdges: true; edgeColor: "#26282c" }
-            Box3D { property bool navBlock: true; x: 44; z: 42; width: 4; height: 2.2; depth: 2
-                    color: "#5d6066"; useToonShading: true; showEdges: true; edgeColor: "#26282c" }
-        }
-
-        Node { id: unitRoot }
-
-        // move-order marker: flat ring that fades
-        Node {
-            id: moveMarker
-            visible: false
-            property color tone: "#e0b24a"
-            function showAt(x, z, c) { position = Qt.vector3d(x, 0.02, z); tone = c; visible = true; markerAnim.restart() }
-            Model {
-                id: markerModel
-                source: "#Cylinder"
-                scale: Qt.vector3d(0.014, 0.0006, 0.014)
-                materials: PrincipledMaterial { baseColor: moveMarker.tone; lighting: PrincipledMaterial.NoLighting }
-                pickable: false
-            }
-            SequentialAnimation {
-                id: markerAnim
-                NumberAnimation { target: markerModel; property: "scale.x"; from: 0.004; to: 0.016; duration: 250 }
-                PauseAnimation { duration: 350 }
-                ScriptAction { script: moveMarker.visible = false }
-            }
-        }
-    }
-
-    // ---- input -----------------------------------------------------------------------------
+    // ---- input -------------------------------------------------------------------------------
     OrbitInput3D {
         id: nav
-        rig: rig
-        view: view3d
+        rig: world.rig
+        view: world
         groundY: 0
-        onCancelled: game.issueMoveOrder(mouse.rmbX, mouse.rmbY)   // right *click* = order
+        onCancelled: if (game.phase === "playing") game.issueOrder(mouse.rmbX, mouse.rmbY)
     }
-
     MouseArea {
         id: mouse
         anchors.fill: parent
+        enabled: game.phase === "playing" || game.phase === "paused"
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
         hoverEnabled: true
         cursorShape: nav.cursorShape
@@ -374,7 +573,7 @@ Item {
             game.forceActiveFocus()
             if (m.button === Qt.RightButton) { rmbX = m.x; rmbY = m.y }
             if (nav.begin(m.x, m.y, m.button, m.modifiers) !== "") return
-            if (m.button === Qt.LeftButton) {
+            if (m.button === Qt.LeftButton && game.phase === "playing") {
                 boxing = true; x0 = m.x; y0 = m.y
                 selBox.set(x0, y0, m.x, m.y); selBox.visible = false
             }
@@ -384,7 +583,7 @@ Item {
             if (boxing) {
                 selBox.set(x0, y0, m.x, m.y)
                 selBox.visible = Math.abs(m.x - x0) > 3 || Math.abs(m.y - y0) > 3
-            } else if (!pressed) {
+            } else if (!pressed && game.phase === "playing") {
                 game.updateHover(m.x, m.y)
             }
         }
@@ -399,70 +598,135 @@ Item {
         }
         onWheel: (w) => nav.wheel(w.angleDelta.y, w.x, w.y)
     }
-
     Rectangle {
         id: selBox
         visible: false
         color: "#33e0b24a"; border.color: "#e0b24a"; border.width: 1
-        function set(ax, ay, bx, by) {
-            x = Math.min(ax, bx); y = Math.min(ay, by)
-            width = Math.abs(bx - ax); height = Math.abs(by - ay)
-        }
+        function set(ax, ay, bx, by) { x = Math.min(ax, bx); y = Math.min(ay, by); width = Math.abs(bx - ax); height = Math.abs(by - ay) }
     }
 
     Keys.onPressed: (e) => {
+        const rig = world.rig
         switch (e.key) {
         case Qt.Key_W: case Qt.Key_Up:    rig.keyAway = 1; break
-        case Qt.Key_S: case Qt.Key_Down:  rig.keyAway = -1; break
+        case Qt.Key_S: case Qt.Key_Down:  if (e.modifiers & Qt.ShiftModifier) { orderStop(selectedPlayerUnits) } else rig.keyAway = -1; break
         case Qt.Key_A: case Qt.Key_Left:  rig.keyRight = -1; break
         case Qt.Key_D: case Qt.Key_Right: rig.keyRight = 1; break
-        case Qt.Key_Escape: setSelection([]); break
-        case Qt.Key_1: playOnSelection("Idle"); break
-        case Qt.Key_2: playOnSelection("Walk"); break
-        case Qt.Key_3: playOnSelection("Attack"); break
-        case Qt.Key_4: playOnSelection("Hit"); break
-        case Qt.Key_5: playOnSelection("Death"); break
-        case Qt.Key_Plus: case Qt.Key_Equal: spawn(1); break
+        case Qt.Key_Escape:
+            if (phase === "playing") { if (selection.length) setSelection([]); else phase = "paused" }
+            else if (phase === "paused") phase = "playing"
+            break
+        case Qt.Key_P: if (phase === "playing") phase = "paused"; else if (phase === "paused") phase = "playing"; break
+        case Qt.Key_F: hud.showFps = !hud.showFps; perf.visible = !perf.visible; break
         case Qt.Key_M: useModels = !useModels; break
-        case Qt.Key_F: perf.visible = !perf.visible; break
-        case Qt.Key_P: screenshot(); break
+        case Qt.Key_BracketLeft: simSpeed = Math.max(1, simSpeed / 2); flash("speed x" + simSpeed); break
+        case Qt.Key_BracketRight: simSpeed = Math.min(8, simSpeed * 2); flash("speed x" + simSpeed); break
+        case Qt.Key_Space: if (playerFortress) rig.focusOn(Qt.vector3d(playerFortress.x, 0, playerFortress.z)); break
+        case Qt.Key_F12: screenshot(); break
         default: return
         }
         e.accepted = true
     }
     Keys.onReleased: (e) => {
         switch (e.key) {
-        case Qt.Key_W: case Qt.Key_Up: case Qt.Key_S: case Qt.Key_Down: rig.keyAway = 0; break
-        case Qt.Key_A: case Qt.Key_Left: case Qt.Key_D: case Qt.Key_Right: rig.keyRight = 0; break
+        case Qt.Key_W: case Qt.Key_Up: case Qt.Key_S: case Qt.Key_Down: world.rig.keyAway = 0; break
+        case Qt.Key_A: case Qt.Key_Left: case Qt.Key_D: case Qt.Key_Right: world.rig.keyRight = 0; break
         default: return
         }
         e.accepted = true
     }
 
-    // ---- overlay ----------------------------------------------------------------------------
-    SpikeHud {
+    // ---- overlays ----------------------------------------------------------------------------
+    Hud {
+        id: hud
         anchors.fill: parent
-        unitCount: game.units.length
-        selectedCount: game.selection.length
+        visible: game.phase === "playing" || game.phase === "paused"
+        game: game
+        selection: game.selection
+        iron: game.iron
+        message: game.message
         fps: game.fps
-        useModels: game.useModels
-        lastMessage: game.message
-        modelStatus: {
-            const t = game.assetConfig.units ? game.assetConfig.units[game.defaultUnitType] : null
-            if (!t) return "loading config..."
-            return (t.displayName || game.defaultUnitType) + " · " + (t.status || "?") + " · " + (t.model || "placeholder")
-                   + (game.units.length && game.units[0].modelReady ? " · loaded" : "")
-        }
-        onSpawnRequested: (n) => game.spawn(n)
-        onClearRequested: game.clearUnits()
-        onToggleModelsRequested: game.useModels = !game.useModels
-        onPlayRequested: (clip) => game.playOnSelection(clip)
+        matchTime: game.matchTime
+        enemyWave: game.enemyAI ? (void game.tick, game.enemyAI.wavesLaunched) : 0
+        objective: game.enemyFortress && game.enemyFortress.alive
+                   ? "Objective: destroy the Enemy Fortress (" + Math.ceil(game.enemyFortress.hp) + " HP)"
+                   : ""
+        onProduceRequested: (b, t) => game.produce(b, t)
+        onCancelProductionRequested: (b) => game.cancelProduction(b)
+        onPauseRequested: game.phase = "paused"
+        onStopRequested: game.orderStop(game.selectedPlayerUnits)
+        onReturnIronRequested: game.orderReturn(game.selectedPlayerUnits, null)
+    }
+
+    MenuOverlay {
+        id: menu
+        anchors.fill: parent
+        mode: game.phase === "title" ? "title" : game.phase === "paused" ? "paused"
+            : game.phase === "victory" ? "victory" : game.phase === "defeat" ? "defeat" : ""
+        subtitle: game.phase === "victory" ? "The enemy fortress lies in ruins. Ironfang stands."
+                : game.phase === "defeat" ? "The Clan Fortress has fallen." : ""
+        stats: (game.phase === "victory" || game.phase === "defeat")
+               ? "Match time " + Math.floor(game.matchTime / 60) + ":" + ("0" + Math.floor(game.matchTime % 60)).slice(-2)
+                 + "   ·   iron gathered " + Math.floor(game.economy.gathered)
+                 + "   ·   enemies slain " + game.unitsKilled + "   ·   units lost " + game.unitsLost
+               : ""
+        onStartRequested: (d) => game.startMatch(d)
+        onResumeRequested: game.phase = "playing"
+        onRestartRequested: game.restartMatch()
+        onShowcaseRequested: game.flash("Asset showcase arrives in Milestone 5")
+        onCreditsRequested: game.flash("Built with Clayground · Assets created and processed with QtMeshEditor · Built with DINOv3")
     }
 
     PerfHud {
         id: perf
         visible: false
-        view3D: view3d
-        anchors { right: parent.right; top: parent.top; margins: 10 }
+        view3D: world
+        anchors { right: parent.right; top: parent.top; margins: 10; topMargin: 48 }
+    }
+
+    // ---- screenshots & scripted self-test ----------------------------------------------------
+    property int shotIndex: 0
+    function screenshot(name) {
+        const file = (name || ("ironfang-shot-" + (++shotIndex))) + ".png"
+        game.grabToImage(function(result) { console.log("SCREENSHOT", file, result.saveToFile(file) ? "saved" : "FAILED") })
+    }
+
+    readonly property bool autotest: Qt.application.arguments.indexOf("--autotest") >= 0
+    property int autoStep: 0
+    Timer {
+        // Scenario: gather, produce, fight, force a victory - at 8x speed so a whole match
+        // shape runs in ~40 s. Logs AUTOTEST lines; used on desktop and in the browser.
+        running: game.autotest && game.phase === "playing"
+        interval: 1500; repeat: true
+        onTriggered: {
+            const s = game.autoStep++
+            const log = (m) => console.log("AUTOTEST[" + s + "] t=" + matchTime.toFixed(0) + "s", m,
+                                           "| iron " + Math.floor(iron) + " units " + units.filter(u => u.alive && u.team === "player").length
+                                           + "/" + units.filter(u => u.alive && u.team === "enemy").length
+                                           + " fps " + fps.toFixed(0) + " step " + stepMs.toFixed(2) + "ms")
+            const workers = units.filter(u => u.alive && u.team === "player" && u.typeId === "goblin_worker")
+            switch (s) {
+            case 0: log("match started, difficulty " + difficulty + ", buildings " + buildings.length); break
+            case 1: { const dep = nearestDeposit(workers[0]); orderGather(workers, dep, null); log("workers -> deposit at " + dep.x + "," + dep.z); break }
+            case 2: simSpeed = 8; log("speed x8"); break
+            case 4: log("gathered so far " + Math.floor(economy.gathered)); screenshot("autotest-gather"); break
+            case 5: { for (let i = 0; i < 3; ++i) produce(playerFoundry, "orc_warrior"); log("queued warriors: " + (playerFoundry.queue ? playerFoundry.queue.items.length : -1)); break }
+            case 8: log("production check, foundry queue " + queueLength(playerFoundry)); break
+            case 12: { log("enemy AI state " + enemyAI.state + " waves " + enemyAI.wavesLaunched + " enemy iron " + Math.floor(enemyAI.economy.iron)); break }
+            case 16: { const army = units.filter(u => u.alive && u.team === "player" && u.typeId !== "goblin_worker")
+                       enemyFortress.hp = 60; orderAttack(army, enemyFortress); log("army of " + army.length + " sent at the (weakened) enemy fortress"); break }
+            case 20: screenshot("autotest-siege"); log("siege in progress, fortress hp " + Math.ceil(enemyFortress.hp)); break
+            case 26: log("phase=" + phase + " waves=" + enemyAI.wavesLaunched + " lost=" + unitsLost + " killed=" + unitsKilled); break
+            case 27: if (phase !== "victory") { enemyFortress.hp = 1; dealDamage(null, enemyFortress, 5); log("forced fortress destruction -> phase " + phase) } break
+            case 28: log("restart test"); restartMatch(); break
+            case 29: log("after restart: phase=" + phase + " units=" + units.length + " buildings=" + buildings.length + " iron=" + iron); break
+            case 30: log("DONE"); if (Qt.platform.os !== "wasm") Qt.quit(); break
+            }
+        }
+    }
+    Timer {   // the autotest timer stops when the match ends (phase != playing); finish from here
+        running: game.autotest && (game.phase === "victory" || game.phase === "defeat") && game.autoStep < 28
+        interval: 1500; repeat: false
+        onTriggered: { console.log("AUTOTEST end phase=" + game.phase + " at t=" + game.matchTime.toFixed(0)); game.autoStep = 28; game.restartMatch() }
     }
 }

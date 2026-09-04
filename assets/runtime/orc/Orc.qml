@@ -218,7 +218,8 @@ Node {
             to: 1467
             running: node.clip === "Attack"
             loops: 1
-            onFinished: node.clipFinished("Attack")
+            // deferred: the handler usually switches `clip`, which drives `running`
+            onFinished: Qt.callLater(function() { node.clipFinished("Attack") })
         }
         KeyframeGroup {
             target: rightFoot
@@ -320,7 +321,8 @@ Node {
             to: 2467
             running: node.clip === "Death"
             loops: 1
-            onFinished: node.clipFinished("Death")
+            // deferred: the handler usually switches `clip`, which drives `running`
+            onFinished: Qt.callLater(function() { node.clipFinished("Death") })
         }
         KeyframeGroup {
             target: rightFoot
@@ -432,7 +434,8 @@ Node {
             to: 767
             running: node.clip === "Hit"
             loops: 1
-            onFinished: node.clipFinished("Hit")
+            // deferred: the handler usually switches `clip`, which drives `running`
+            onFinished: Qt.callLater(function() { node.clipFinished("Hit") })
         }
         KeyframeGroup {
             target: rightFoot
