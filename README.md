@@ -17,6 +17,9 @@ then played by a game built on [Clayground](https://github.com/MisterGC/claygrou
 Fortress (workers) and the War Foundry (warriors, archers, an ogre); hold off the enemy waves;
 destroy the Enemy Fortress. Victory/defeat overlay, Play Again without reloading.
 
+![40 Orcs marching around a building (desktop)](docs/screenshots/desktop-40-units-walking.png)
+![Base with QtMeshEditor buildings and gathering goblins](docs/screenshots/web-runtime-orc.png)
+
 ## Requirements
 
 | Tool | Version | Notes |
@@ -116,6 +119,23 @@ cross-origin isolated: send `Cross-Origin-Opener-Policy: same-origin` and
 `Cross-Origin-Embedder-Policy: require-corp`, or — on GitHub Pages, which cannot set headers —
 keep the bundled `coi-serviceworker.js`. `.wasm` must be served as `application/wasm`.
 Opening `index.html` from disk does not work. Full list: `docs/feasibility-report.md`.
+
+## Remaining placeholders and known gaps
+
+Every unit, building and prop in the game is a QtMeshEditor-generated model (no Box3D
+placeholders remain in the shipped match; `UnitView`/`BuildingView` still fall back to a box when
+an entry in `config/assets.js` has no model). Open items:
+
+* The Enemy Fortress reuses the Clan Fortress model (rotated, red team frame) — a distinct
+  enemy fortress image → model is a one-command job with `scripts/generate-models.sh`.
+* Hand-held weapons (Hammer, Cleaver, Bow, Pickaxe, Shield) are generated but not attached to
+  the rigs; the archer's arrow is the only prop in use.
+* No LODs, uncompressed 1024² PNG textures (about 47 MB of assets on the web), no shadows.
+* Effects are flashes and rings; no particles. Clip loops are untuned (`Idle`/`Walk` seams).
+* Audio: Clayground's `Music` type stalls on WebAssembly (clayground#216), so the loop is a
+  re-triggered `Sound`; there is a small seam at the loop point.
+* Manual browser input pass on the checklist has not been done by a human yet (the scripted
+  match runs in headless Chrome; see `docs/feasibility-report.md`).
 
 ## License
 

@@ -119,6 +119,18 @@ Frame rates sit on the display/vsync cap in both cases, so the true headroom is 
 ≥ 2× at 40 units (frame 8–9 ms at 120 Hz desktop). The earlier 6–12 FPS readings during
 development were caused by hung app instances sharing the GPU, not by the scene.
 
+## Vertical-slice measurements (Milestones 1–5, 2026-09-04)
+
+Scripted match (`--autotest`, 8× simulation speed, 19 buildings, up to 15 units, arrows, AI):
+
+| Metric | Desktop (Metal, 120 Hz) | Browser (Chrome 152, wasm_multithread) |
+|---|---|---|
+| FPS during the whole match | 112–120 (11 for the first second while models load) | 53–60 |
+| Simulation cost, 8 steps per frame | 2–9 ms (≈ 0.3–1.1 ms per step) | 2–5 ms |
+| Time to first frame (local server) | < 1 s | ≈ 2.3 s incl. 417 preloaded asset files |
+| Download | n/a | 37 MB wasm + 47 MB assets (separate, cacheable) |
+| Match shape at 8× | gather → 3 warriors → wave 1 at ~2 min → siege → defeat/victory → restart OK | same |
+
 ## Static hosting requirements
 
 | Requirement | Value |
