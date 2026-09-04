@@ -75,6 +75,7 @@ ships with Qt works: `~/Qt/Tools/CMake/CMake.app/Contents/bin/ctest --test-dir b
 |---|---|
 | Left click / drag | select a unit or building / box-select units · Shift adds or removes |
 | Right click on ground / enemy / deposit / fortress | move · attack · gather (workers) · return iron |
+| Building selected + right click | set its rally point: ground = new units walk there; iron deposit (Fortress) = new goblins start gathering there, or at the next deposit once it is empty; click the building itself to clear |
 | W A S D / arrows, wheel, right-drag | pan, zoom toward the cursor, orbit |
 | HUD buttons | produce units (cost · time), cancel, Return iron, Stop |
 | P / Esc | pause / clear selection · Space centres on the fortress |

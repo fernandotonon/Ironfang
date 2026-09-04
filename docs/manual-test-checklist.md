@@ -52,6 +52,7 @@ is called done. Items marked *(M1+)* are not exercised by the Milestone 0 spike 
 - [ ] Select the Clan Fortress: a Goblin Worker button (50 iron) appears; select the War Foundry: Warrior 80 / Archer 110 / Ogre 280.
 - [ ] Buttons disable when iron is short; clicking one deducts iron, the progress bar fills, "X ready" appears and the unit spawns at the rally point.
 - [ ] Queue up to 5; Cancel refunds the last item.
+- [ ] Rally: select the Foundry, right-click ground → a flag appears; new warriors walk there. Select the Fortress, right-click a deposit → new goblins gather there without orders; when that deposit is empty they pick the next. Right-click the building to clear the rally.
 
 ## Combat
 - [ ] Right-click an enemy: units walk there and attack (Attack clip, red hit flash, enemy health bar).
