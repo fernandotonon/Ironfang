@@ -45,7 +45,16 @@ cp "$BUILD_DIR"/bin/ironfang.{html,js,wasm} "$BUILD_DIR"/bin/qtloader.js "$DEPLO
 [ -f "$BUILD_DIR/bin/qtlogo.svg" ] && cp "$BUILD_DIR/bin/qtlogo.svg" "$DEPLOY_DIR/"
 [ -f "$BUILD_DIR/bin/ironfang.worker.js" ] && cp "$BUILD_DIR/bin/ironfang.worker.js" "$DEPLOY_DIR/"
 cp external/clayground/docs/coi-serviceworker.js "$DEPLOY_DIR/"
-# index.html = Qt's generated shell + COOP/COEP service-worker shim + ?args= support
+# Runtime 3D assets are not compiled into the wasm: ship them as files and let Qt's loader
+# preload them into the in-memory filesystem (/game/assets/...) - see ironfang-assets.json.
+mkdir -p "$DEPLOY_DIR/assets" && cp -R assets/runtime "$DEPLOY_DIR/assets/"
+find "$DEPLOY_DIR/assets" -name .DS_Store -delete
+( cd "$DEPLOY_DIR" && find assets -type f | sort | python3 -c '
+import json, sys
+files = [l.strip() for l in sys.stdin if l.strip()]
+json.dump([{"source": f, "destination": "/game/" + f} for f in files], open("ironfang-assets.json", "w"))
+print(f"preload manifest: {len(files)} files")' )
+# index.html = Qt's generated shell + COOP/COEP service-worker shim + ?args= support + preload
 python3 scripts/make-web-index.py "$DEPLOY_DIR" ironfang
 du -sh "$DEPLOY_DIR"/* | sed 's|^|  |'
 echo

@@ -29,11 +29,14 @@ Item {
     readonly property real simStep: Balance.match.simStep
     property int simSpeed: 1                    // debug: steps per step (keys [ ])
     property bool useModels: Qt.application.arguments.indexOf("--no-models") < 0
-    property string assetBase: ""               // "" = qrc/relative; Web Runtime: "file:///game/"
+    // Model files: qrc:/ (relative) on desktop; on WebAssembly they are preloaded into the
+    // in-memory filesystem under /game/ (own build: Qt loader `preload`; Clayground Web Runtime:
+    // its app shell + assets-manifest.json).
+    property string assetBase: Qt.platform.os === "wasm" ? "file:///game/" : ""
     property string difficulty: "normal"
 
     // ---- match state -----------------------------------------------------------------------
-    property string phase: "title"              // title | playing | paused | victory | defeat
+    property string phase: "title"              // title | playing | paused | victory | defeat | showcase | credits
     property real matchTime: 0
     property int tick: 0                        // bumps every sim step; HUD bindings depend on it
     property var economy: Economy.create(0)
@@ -56,7 +59,14 @@ Item {
     // ---- startup ---------------------------------------------------------------------------
     Component.onCompleted: {
         if (autotest) startMatch("normal")
+        else if (Qt.application.arguments.indexOf("--showcase") >= 0) phase = "showcase"
     }
+    Timer {   // --showcase: screenshot the showcase after the model loaded, then quit (desktop)
+        running: Qt.application.arguments.indexOf("--showcase") >= 0 && game.phase === "showcase"
+        interval: 4000; repeat: false
+        onTriggered: { game.screenshot("showcase"); if (Qt.platform.os !== "wasm") Qt.callLater(function() { quitTimer.start() }) }
+    }
+    Timer { id: quitTimer; interval: 800; onTriggered: Qt.quit() }
 
     function startMatch(diff) {
         difficulty = diff || "normal"
@@ -76,7 +86,13 @@ Item {
         world.rig.applyState({ px: Level.layout.cameraStart.x, py: 0, pz: Level.layout.cameraStart.z,
                                yaw: 0, pitch: 52, distance: 42 })
         phase = "playing"
+        audio.startMusic()
         flash("Send your goblins to the iron. Forge an army. Break the enemy fortress.")
+    }
+    onPhaseChanged: {
+        if (phase === "paused") audio.pauseMusic()
+        else if (phase === "playing") audio.resumeMusic()
+        else if (phase !== "victory" && phase !== "defeat") audio.stopMusic()
     }
 
     function restartMatch() { startMatch(difficulty) }
@@ -202,6 +218,7 @@ Item {
         for (const e of selection) e.selected = false
         selection = list
         for (const e of selection) e.selected = true
+        if (list.length) audio.play("select", 0.6)
     }
 
     function selectAt(sx, sy, additive) {
@@ -263,7 +280,8 @@ Item {
             u.moveAlong(path)
         }
         world.moveMarker.showAt(g.x, g.z, unreachable === 0 ? "#e0b24a" : "#c9432e")
-        if (unreachable) flash(unreachable + " unit(s): destination unreachable")
+        if (unreachable) { flash(unreachable + " unit(s): destination unreachable"); audio.play("invalid") }
+        else audio.play("move")
     }
 
     function orderAttack(list, target) {
@@ -274,6 +292,7 @@ Item {
         }
         world.moveMarker.showAt(target.x, target.z, "#c9432e")
         target.hitFlash = Math.max(target.hitFlash, 0.5)
+        audio.play("attack_order")
     }
 
     function orderGather(list, node, g) {
@@ -285,7 +304,8 @@ Item {
             workers++
         }
         world.moveMarker.showAt(node.x, node.z, "#9ab0c0")
-        if (workers === 0) flash("only goblin workers can gather iron")
+        if (workers === 0) { flash("only goblin workers can gather iron"); audio.play("invalid") }
+        else audio.play("move")
     }
 
     function orderReturn(list, g) {
@@ -305,7 +325,7 @@ Item {
         if (!building || !building.queue) return
         const r = Production.enqueue(building.queue, building.typeId, typeId, economy)
         iron = economy.iron
-        if (!r.ok) flash(r.reason)
+        if (!r.ok) { flash(r.reason); audio.play("invalid") } else audio.play("select", 0.5)
         tick++
     }
 
@@ -378,7 +398,7 @@ Item {
         approach: (w, node) => Combat.approachPoint(w, node, 0.25),
         findDropOff: (w) => game.playerFortress && game.playerFortress.alive ? game.playerFortress : null,
         findDeposit: (w) => game.nearestDeposit(w),
-        deposit: (w, amount) => { Economy.deposit(game.economy, amount); game.iron = game.economy.iron }
+        deposit: (w, amount) => { Economy.deposit(game.economy, amount); game.iron = game.economy.iron; audio.play("deposit", 0.7) }
     })
     function nearestDeposit(w) {
         let best = null, bestD = 1e9
@@ -393,6 +413,8 @@ Item {
         for (const u of units) {
             if (!u.alive || u.typeId !== "goblin_worker" || u.team !== "player") continue
             if (Gather.isActive(u)) Gather.step(u, dt, gatherCtx)
+            if (u.gatherState === "gathering" && u.prevGatherState !== "gathering") audio.play("gather", 0.5)
+            u.prevGatherState = u.gatherState
         }
     }
 
@@ -434,8 +456,8 @@ Item {
                 if (u.cooldown <= 0) {
                     u.cooldown = stats.cooldown
                     u.play("Attack")
-                    if (stats.range > 0) fireProjectile(u, u.target)
-                    else dealDamage(u, u.target, Combat.damageFor(stats, u.target))
+                    if (stats.range > 0) { fireProjectile(u, u.target); audio.play("arrow_shot", 0.6) }
+                    else { dealDamage(u, u.target, Combat.damageFor(stats, u.target)); audio.play(u.typeId === "ironhide_ogre" ? "ogre_hit" : "melee_hit", 0.7) }
                 }
             } else {
                 u.repathTimer -= dt
@@ -462,10 +484,12 @@ Item {
     function onKilled(target, attacker) {
         if (target.isUnit) {
             target.die()
+            audio.play("death", 0.7)
             if (target.team === "player") unitsLost++; else unitsKilled++
             if (selection.indexOf(target) >= 0) setSelection(selection.filter(s => s !== target))
         } else {
             target.hitFlash = 1
+            audio.play("building_destroyed")
             if (target.team === "player") flash(target.typeDef.displayName + " destroyed!")
             else flash("Enemy " + target.typeDef.displayName + " destroyed!")
         }
@@ -477,7 +501,7 @@ Item {
             damage: Combat.damageFor(shooter.stats, target), speed: shooter.stats.projectileSpeed || 20
         })
         p.aim = Qt.vector3d(target.x, 1.0, target.z)
-        p.hit.connect((t, dmg, s) => game.dealDamage(s, t, dmg))
+        p.hit.connect((t, dmg, s) => { game.dealDamage(s, t, dmg); audio.play("arrow_hit", 0.5) })
         const list = projectiles.slice(); list.push(p); projectiles = list
     }
 
@@ -509,7 +533,7 @@ Item {
                 const spot = Nav.distribute(rp.x, rp.z, 1 + Math.floor(Math.random() * 6), 1.4)
                 const s = spot[spot.length - 1]
                 const u = spawnUnit(done, b.team, s.x, s.z)
-                if (b.team === "player") flash(unitName(done) + " ready")
+                if (b.team === "player") { flash(unitName(done) + " ready"); audio.play("produced") }
             }
         }
     }
@@ -524,6 +548,7 @@ Item {
         launchWave: (list, target) => {
             for (const u of list) { u.inWave = true; u.order = "attackMove"; u.primaryTarget = target; u.target = target; u.repathTimer = 0 }
             game.flash("An enemy war party is marching on your fortress!")
+            audio.play("wave_incoming")
         }
     })
     function stepEnemy(dt) {
@@ -543,10 +568,12 @@ Item {
     function endMatch(result) {
         phase = result
         setSelection([])
+        audio.play(result === "victory" ? "victory" : "defeat")
     }
 
     // ---- 3D scene ----------------------------------------------------------------------------
-    GameWorld { id: world; anchors.fill: parent; mapSizeX: game.mapSize; mapSizeZ: game.mapSize }
+    GameWorld { id: world; anchors.fill: parent; mapSizeX: game.mapSize; mapSizeZ: game.mapSize; visible: game.phase !== "showcase" }
+    AudioController { id: audio; soundOn: Qt.application.arguments.indexOf("--mute") < 0 && !game.autotest }
     GridPathfinder { id: pathfinder; diagonal: true }
 
     // ---- input -------------------------------------------------------------------------------
@@ -619,6 +646,7 @@ Item {
         case Qt.Key_P: if (phase === "playing") phase = "paused"; else if (phase === "paused") phase = "playing"; break
         case Qt.Key_F: hud.showFps = !hud.showFps; perf.visible = !perf.visible; break
         case Qt.Key_M: useModels = !useModels; break
+        case Qt.Key_N: audio.soundOn = !audio.soundOn; if (!audio.soundOn) audio.stopMusic(); else if (phase === "playing") audio.startMusic(); flash(audio.soundOn ? "sound on" : "sound off"); break
         case Qt.Key_BracketLeft: simSpeed = Math.max(1, simSpeed / 2); flash("speed x" + simSpeed); break
         case Qt.Key_BracketRight: simSpeed = Math.min(8, simSpeed * 2); flash("speed x" + simSpeed); break
         case Qt.Key_Space: if (playerFortress) rig.focusOn(Qt.vector3d(playerFortress.x, 0, playerFortress.z)); break
@@ -662,7 +690,8 @@ Item {
         id: menu
         anchors.fill: parent
         mode: game.phase === "title" ? "title" : game.phase === "paused" ? "paused"
-            : game.phase === "victory" ? "victory" : game.phase === "defeat" ? "defeat" : ""
+            : game.phase === "victory" ? "victory" : game.phase === "defeat" ? "defeat"
+            : game.phase === "credits" ? "credits" : ""
         subtitle: game.phase === "victory" ? "The enemy fortress lies in ruins. Ironfang stands."
                 : game.phase === "defeat" ? "The Clan Fortress has fallen." : ""
         stats: (game.phase === "victory" || game.phase === "defeat")
@@ -673,8 +702,18 @@ Item {
         onStartRequested: (d) => game.startMatch(d)
         onResumeRequested: game.phase = "playing"
         onRestartRequested: game.restartMatch()
-        onShowcaseRequested: game.flash("Asset showcase arrives in Milestone 5")
-        onCreditsRequested: game.flash("Built with Clayground · Assets created and processed with QtMeshEditor · Built with DINOv3")
+        onShowcaseRequested: game.phase = "showcase"
+        onCreditsRequested: game.phase = "credits"
+        onBackRequested: game.phase = "title"
+    }
+
+    AssetShowcase {
+        anchors.fill: parent
+        visible: game.phase === "showcase"
+        assetBase: game.assetBase
+        useModels: game.useModels
+        focus: visible
+        onCloseRequested: game.phase = "title"
     }
 
     PerfHud {

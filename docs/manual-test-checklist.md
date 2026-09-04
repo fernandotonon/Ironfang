@@ -42,8 +42,30 @@ is called done. Items marked *(M1+)* are not exercised by the Milestone 0 spike 
 - [ ] "+20" to 60 units: still usable (report FPS).
 - [ ] `F` toggles Clayground's PerfHud (render stats).
 
-## Gameplay *(M1+)*
-- [ ] Gathering, production, combat, enemy waves, victory, defeat, restart, asset showcase.
+## Gathering & economy
+- [ ] Select workers, right-click an iron deposit: they walk there, play Gather, carry a cube of iron back to the Clan Fortress, iron counter rises by 10 per trip, deposit's "Iron left" decreases.
+- [ ] Deposit depletes: it fades, workers move to the next deposit or go idle when none is left.
+- [ ] "Return iron" with a carrying worker sends it home; empty-handed workers ignore it.
+- [ ] Right-click the fortress with carrying workers → they return.
+
+## Production
+- [ ] Select the Clan Fortress: a Goblin Worker button (50 iron) appears; select the War Foundry: Warrior 80 / Archer 110 / Ogre 280.
+- [ ] Buttons disable when iron is short; clicking one deducts iron, the progress bar fills, "X ready" appears and the unit spawns at the rally point.
+- [ ] Queue up to 5; Cancel refunds the last item.
+
+## Combat
+- [ ] Right-click an enemy: units walk there and attack (Attack clip, red hit flash, enemy health bar).
+- [ ] Archers fire visible arrows and keep distance; arrows to a dead target land harmlessly.
+- [ ] Idle warriors auto-engage enemies within ~9 m and return after a leash of 16 m.
+- [ ] Ogre deals ×2.5 to buildings.
+- [ ] Killed units play Death, fade, and are removed; a dead target is dropped by attackers.
+- [ ] Destroying the Enemy Fortress → Victory overlay with stats; losing the Clan Fortress → Defeat.
+
+## Enemy & match flow
+- [ ] First wave marches about 2 minutes in (message shown); later waves grow.
+- [ ] P / Esc pause; Resume continues without a time jump.
+- [ ] Play Again / Restart resets iron, units, buildings and camera without reloading the page.
+- [ ] Easy / Normal / Hard change wave pressure.
 
 ## Static deployment
 - [ ] `deploy/multithread/` copied to a plain static host (GitHub Pages) loads with `coi-serviceworker.js` (one automatic reload on first visit), and assets (`.mesh`, `.png`, `.qad`) all load (no 404s in the network tab).

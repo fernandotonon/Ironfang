@@ -1,4 +1,5 @@
-// Title / pause / victory / defeat overlays. `mode`: "" | "title" | "paused" | "victory" | "defeat"
+// Title / pause / victory / defeat / credits overlays.
+// `mode`: "" | "title" | "paused" | "victory" | "defeat" | "credits"
 import QtQuick
 
 Item {
@@ -13,6 +14,7 @@ Item {
     signal restartRequested()
     signal showcaseRequested()
     signal creditsRequested()
+    signal backRequested()
 
     readonly property color gold: "#e0b24a"
     readonly property color ink: "#f2e2c4"
@@ -37,7 +39,7 @@ Item {
         spacing: 14
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: overlay.mode === "victory" ? "VICTORY" : overlay.mode === "defeat" ? "DEFEAT" : overlay.mode === "paused" ? "PAUSED" : "IRONFANG"
+            text: overlay.mode === "victory" ? "VICTORY" : overlay.mode === "defeat" ? "DEFEAT" : overlay.mode === "paused" ? "PAUSED" : overlay.mode === "credits" ? "CREDITS" : "IRONFANG"
             color: overlay.mode === "defeat" ? "#c9432e" : overlay.gold
             font.pixelSize: overlay.mode === "title" ? 64 : 48; font.bold: true; font.letterSpacing: 8
         }
@@ -80,6 +82,25 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             spacing: 8
             MenuButton { label: "Play Again"; primary: true; onClicked: overlay.restartRequested() }
+            MenuButton { label: "Back to Title"; onClicked: overlay.backRequested() }
+        }
+        Column {
+            visible: overlay.mode === "credits"
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: 10
+            Text {
+                width: Math.min(overlay.width - 60, 720); wrapMode: Text.WordWrap; horizontalAlignment: Text.AlignHCenter
+                color: overlay.ink; font.pixelSize: 14; lineHeight: 1.3
+                text: "<b>Built with Clayground</b> — MIT, github.com/MisterGC/clayground<br>"
+                    + "<b>Assets created and processed with QtMeshEditor</b> — MIT, github.com/fernandotonon/QtMeshEditor<br>"
+                    + "Image-to-3D: TRELLIS.2 (Microsoft, MIT) · Built with DINOv3 (Meta) · background matte: U²-Net (Apache-2.0)<br>"
+                    + "Auto-rig: QtMeshEditor humanoid template (Pinocchio algorithm) · animation clips retargeted from QtMeshEditor's<br>"
+                    + "permissive motion library (CC0 and CC-BY sources; full credits in THIRD_PARTY_LICENSES.md / docs/licenses)<br>"
+                    + "Engine: Qt 6 / Qt Quick 3D (GPL-3.0 for open-source use) · Emscripten<br>"
+                    + "Audio: synthesized for this game (scripts/gen-audio.py)<br><br>"
+                    + "Ironfang: First Siege © 2026 Fernando Tonon — MIT License"
+            }
+            MenuButton { label: "Back"; primary: true; onClicked: overlay.backRequested() }
         }
         Item { width: 1; height: 20 }
         Text {

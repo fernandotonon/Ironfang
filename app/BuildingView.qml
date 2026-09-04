@@ -42,13 +42,18 @@ Node {
 
     function lookAt() {}
 
+    // destruction: the structure sinks and tilts into the ground, leaving a dark scorched slab
+    property real ruin: root.alive ? 0 : 1
+    Behavior on ruin { NumberAnimation { duration: 1800; easing.type: Easing.InQuad } }
+
     Loader3D {
         id: modelLoader
         active: root.useModel && !!root.typeDef.model
         source: !active ? "" : (root.assetBase ? root.assetBase + root.typeDef.model
                                                : Qt.resolvedUrl(root.typeDef.model))
-        scale: Qt.vector3d(root.modelScale, root.modelScale, root.modelScale)
-        y: (root.typeDef.footOffset || 0) * root.modelScale
+        scale: Qt.vector3d(root.modelScale, root.modelScale * (1 - 0.7 * root.ruin), root.modelScale)
+        y: (root.typeDef.footOffset || 0) * root.modelScale * (1 - 0.7 * root.ruin) - root.ruin * 0.4
+        eulerRotation.z: root.ruin * 7
         opacity: root.depleted ? 0.45 : 1
         onStatusChanged: if (status === Loader3D.Error) console.warn("BuildingView: failed to load", source)
     }
@@ -98,6 +103,16 @@ Node {
         value: root.maxHp > 0 ? root.hp / root.maxHp : 1
         camYaw: root.camYaw - root.eulerRotation.y
         camPitch: root.camPitch
+    }
+
+    Model {                                  // scorched slab under a destroyed structure
+        visible: root.ruin > 0.01
+        source: "#Cube"
+        y: 0.03
+        scale: Qt.vector3d(root.footW / 100 * 1.1, 0.0006, root.footD / 100 * 1.1)
+        opacity: root.ruin * 0.9
+        materials: PrincipledMaterial { baseColor: "#1b1715"; roughness: 1; alphaMode: PrincipledMaterial.Blend }
+        pickable: false
     }
 
     // hit feedback: a red flash ring on the ground

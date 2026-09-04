@@ -5,6 +5,7 @@
 
 * adds the coi-serviceworker.js shim (COOP/COEP for hosts that cannot set headers)
 * lets the page pass program arguments to the app:  index.html?args=--autotest%20--no-models
+* preloads ironfang-assets.json (asset files -> in-memory FS under /game/) when present
 * sets the page title
 """
 import os
@@ -23,6 +24,10 @@ args_js = ("arguments: (new URLSearchParams(location.search).get('args') || '')"
            ".split(' ').filter(Boolean),\n")
 if "URLSearchParams(location.search).get('args')" not in html:
     html = html.replace("qtLoad({", "qtLoad({\n                    " + args_js, 1)
+
+# preload the asset files listed in ironfang-assets.json into the wasm filesystem (/game/...)
+if os.path.exists(os.path.join(d, "ironfang-assets.json")) and "ironfang-assets.json" not in html:
+    html = html.replace("qt: {", "qt: {\n                        preload: ['ironfang-assets.json'],", 1)
 
 html = html.replace(f"<title>{app}</title>", "<title>Ironfang: First Siege</title>")
 open(os.path.join(d, "index.html"), "w", encoding="utf-8").write(html)

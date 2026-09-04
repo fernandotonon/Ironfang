@@ -50,6 +50,7 @@ Node {
     property var gatherNode: null
     property real gatherTimer: 0
     property bool gatherArrived: false
+    property string prevGatherState: "idle"   // for one-shot gather sound cues
 
     // ---- presentation state ---------------------------------------------------------------
     property bool selected: false
