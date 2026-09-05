@@ -1,5 +1,5 @@
 
-material qtmesh_gen3d_1_1788480558057_mesh_mat
+material qtmesh_gen3d_1_1788603161353_mesh_mat
 {
 	technique
 	{
@@ -8,35 +8,35 @@ material qtmesh_gen3d_1_1788480558057_mesh_mat
 
 			texture_unit diffuse_map
 			{
-				texture qtmesh_gen3d_1_1788480558057_diffuse.png 10
+				texture qtmesh_gen3d_1_1788603161353_diffuse.png 10
 				colour_op_ex modulate src_texture src_diffuse
 				colour_op_multipass_fallback dest_colour zero
 			}
 
 			texture_unit metallic
 			{
-				texture qtmesh_gen3d_1_1788480558057_roughness.png 10
+				texture qtmesh_gen3d_1_1788603161353_roughness.png 10
 				colour_op_ex source1 src_current src_current
 				colour_op_multipass_fallback dest_colour zero
 			}
 
 			texture_unit roughness
 			{
-				texture qtmesh_gen3d_1_1788480558057_roughness.png 10
+				texture qtmesh_gen3d_1_1788603161353_roughness.png 10
 				colour_op_ex source1 src_current src_current
 				colour_op_multipass_fallback dest_colour zero
 			}
 
 			texture_unit albedo
 			{
-				texture qtmesh_gen3d_1_1788480558057_diffuse.png 10
+				texture qtmesh_gen3d_1_1788603161353_diffuse.png 10
 				colour_op_ex modulate src_texture src_diffuse
 				colour_op_multipass_fallback dest_colour zero
 			}
 
 			texture_unit normal_map
 			{
-				texture qtmesh_gen3d_1_1788480558057_normal.png 10
+				texture qtmesh_gen3d_1_1788603161353_normal.png 10
 				colour_op_ex source1 src_current src_current
 				colour_op_multipass_fallback dest_colour zero
 			}

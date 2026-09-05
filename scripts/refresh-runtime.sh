@@ -51,6 +51,6 @@ for spec in "${ASSETS[@]}"; do
 done
 
 python3 scripts/gen-asset-meta.py
-python3 scripts/update-asset-offsets.py | grep -E "->|updated"
+python3 scripts/update-asset-offsets.py | grep -E -- "->|updated"
 python3 scripts/gen-asset-manifest.py
 echo "runtime refreshed: $(du -sh assets/runtime | cut -f1)"

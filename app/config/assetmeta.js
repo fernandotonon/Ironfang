@@ -29,8 +29,8 @@ var assets = {
     "status": "QtMeshEditor-generated"
   },
   "orc": {
-    "verts": 10623,
-    "tris": 9952,
+    "verts": 11043,
+    "tris": 9910,
     "skeleton": "",
     "bones": 20,
     "name": "Orc",
@@ -38,9 +38,9 @@ var assets = {
     "exported": "assets/exported/Orc/Orc.glb",
     "runtime": "assets/runtime/orc/Orc.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788482829942_diffuse.png",
-      "qtmesh_gen3d_1_1788482829942_normal.png",
-      "qtmesh_gen3d_1_1788482829942_roughness.png"
+      "qtmesh_gen3d_1_1788603671564_diffuse.png",
+      "qtmesh_gen3d_1_1788603671564_normal.png",
+      "qtmesh_gen3d_1_1788603671564_roughness.png"
     ],
     "clips": [
       "Attack",
@@ -79,8 +79,8 @@ var assets = {
     "status": "QtMeshEditor-generated"
   },
   "ogre": {
-    "verts": 10657,
-    "tris": 9908,
+    "verts": 11292,
+    "tris": 9852,
     "skeleton": "",
     "bones": 20,
     "name": "Ogre",
@@ -88,9 +88,9 @@ var assets = {
     "exported": "assets/exported/Ogre/Ogre.glb",
     "runtime": "assets/runtime/ogre/Ogre.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788480558057_diffuse.png",
-      "qtmesh_gen3d_1_1788480558057_normal.png",
-      "qtmesh_gen3d_1_1788480558057_roughness.png"
+      "qtmesh_gen3d_1_1788603161353_diffuse.png",
+      "qtmesh_gen3d_1_1788603161353_normal.png",
+      "qtmesh_gen3d_1_1788603161353_roughness.png"
     ],
     "clips": [
       "Attack",
@@ -104,8 +104,8 @@ var assets = {
     "status": "QtMeshEditor-generated"
   },
   "clan_fortress": {
-    "verts": 15926,
-    "tris": 9788,
+    "verts": 15554,
+    "tris": 9828,
     "skeleton": "",
     "bones": 0,
     "name": "Clan Fortress",
@@ -113,17 +113,17 @@ var assets = {
     "exported": "assets/exported/Clan Fortress/Clan Fortress.glb",
     "runtime": "assets/runtime/clan_fortress/ClanFortress.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788478725222_diffuse.png",
-      "qtmesh_gen3d_1_1788478725222_normal.png",
-      "qtmesh_gen3d_1_1788478725222_roughness.png"
+      "qtmesh_gen3d_1_1788604320591_diffuse.png",
+      "qtmesh_gen3d_1_1788604320591_normal.png",
+      "qtmesh_gen3d_1_1788604320591_roughness.png"
     ],
     "clips": [],
     "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
     "status": "QtMeshEditor-generated"
   },
   "war_foundry": {
-    "verts": 15331,
-    "tris": 9918,
+    "verts": 14664,
+    "tris": 9930,
     "skeleton": "",
     "bones": 0,
     "name": "War Foundry",
@@ -131,17 +131,17 @@ var assets = {
     "exported": "assets/exported/War Foundry/War Foundry.glb",
     "runtime": "assets/runtime/war_foundry/WarFoundry.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788485235370_diffuse.png",
-      "qtmesh_gen3d_1_1788485235370_normal.png",
-      "qtmesh_gen3d_1_1788485235370_roughness.png"
+      "qtmesh_gen3d_1_1788604883446_diffuse.png",
+      "qtmesh_gen3d_1_1788604883446_normal.png",
+      "qtmesh_gen3d_1_1788604883446_roughness.png"
     ],
     "clips": [],
     "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
     "status": "QtMeshEditor-generated"
   },
   "iron_deposit": {
-    "verts": 11554,
-    "tris": 9994,
+    "verts": 12867,
+    "tris": 9998,
     "skeleton": "",
     "bones": 0,
     "name": "Iron Deposit",
@@ -149,17 +149,17 @@ var assets = {
     "exported": "assets/exported/Iron Deposit/Iron Deposit.glb",
     "runtime": "assets/runtime/iron_deposit/IronDeposit.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788479538976_diffuse.png",
-      "qtmesh_gen3d_1_1788479538976_normal.png",
-      "qtmesh_gen3d_1_1788479538976_roughness.png"
+      "qtmesh_gen3d_1_1788606390803_diffuse.png",
+      "qtmesh_gen3d_1_1788606390803_normal.png",
+      "qtmesh_gen3d_1_1788606390803_roughness.png"
     ],
     "clips": [],
     "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
     "status": "QtMeshEditor-generated"
   },
   "large_rocks": {
-    "verts": 8988,
-    "tris": 9998,
+    "verts": 12844,
+    "tris": 9842,
     "skeleton": "",
     "bones": 0,
     "name": "Large Rocks",
@@ -167,17 +167,17 @@ var assets = {
     "exported": "assets/exported/Large Rocks/Large Rocks.glb",
     "runtime": "assets/runtime/large_rocks/LargeRocks.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788480093803_diffuse.png",
-      "qtmesh_gen3d_1_1788480093803_normal.png",
-      "qtmesh_gen3d_1_1788480093803_roughness.png"
+      "qtmesh_gen3d_1_1788607383666_diffuse.png",
+      "qtmesh_gen3d_1_1788607383666_normal.png",
+      "qtmesh_gen3d_1_1788607383666_roughness.png"
     ],
     "clips": [],
     "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
     "status": "QtMeshEditor-generated"
   },
   "small_rocks": {
-    "verts": 8453,
-    "tris": 9990,
+    "verts": 10963,
+    "tris": 9920,
     "skeleton": "",
     "bones": 0,
     "name": "Small Rocks",
@@ -185,17 +185,17 @@ var assets = {
     "exported": "assets/exported/Small Rocks/Small Rocks.glb",
     "runtime": "assets/runtime/small_rocks/SmallRocks.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788484933545_diffuse.png",
-      "qtmesh_gen3d_1_1788484933545_normal.png",
-      "qtmesh_gen3d_1_1788484933545_roughness.png"
+      "qtmesh_gen3d_1_1788607997570_diffuse.png",
+      "qtmesh_gen3d_1_1788607997570_normal.png",
+      "qtmesh_gen3d_1_1788607997570_roughness.png"
     ],
     "clips": [],
     "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
     "status": "QtMeshEditor-generated"
   },
   "dead_tree": {
-    "verts": 12859,
-    "tris": 9058,
+    "verts": 10404,
+    "tris": 9978,
     "skeleton": "",
     "bones": 0,
     "name": "Dead Ironwood tree",
@@ -203,17 +203,17 @@ var assets = {
     "exported": "assets/exported/Dead Ironwood tree/Dead Ironwood tree.glb",
     "runtime": "assets/runtime/dead_tree/DeadIronwoodtree.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788478991592_diffuse.png",
-      "qtmesh_gen3d_1_1788478991592_normal.png",
-      "qtmesh_gen3d_1_1788478991592_roughness.png"
+      "qtmesh_gen3d_1_1788608453576_diffuse.png",
+      "qtmesh_gen3d_1_1788608453576_normal.png",
+      "qtmesh_gen3d_1_1788608453576_roughness.png"
     ],
     "clips": [],
     "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
     "status": "QtMeshEditor-generated"
   },
   "broken_cart": {
-    "verts": 13482,
-    "tris": 9866,
+    "verts": 13660,
+    "tris": 9906,
     "skeleton": "",
     "bones": 0,
     "name": "Broken Cart",
@@ -221,17 +221,17 @@ var assets = {
     "exported": "assets/exported/Broken Cart/Broken Cart.glb",
     "runtime": "assets/runtime/broken_cart/BrokenCart.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788478215302_diffuse.png",
-      "qtmesh_gen3d_1_1788478215302_normal.png",
-      "qtmesh_gen3d_1_1788478215302_roughness.png"
+      "qtmesh_gen3d_1_1788609127455_diffuse.png",
+      "qtmesh_gen3d_1_1788609127455_normal.png",
+      "qtmesh_gen3d_1_1788609127455_roughness.png"
     ],
     "clips": [],
     "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
     "status": "QtMeshEditor-generated"
   },
   "arrow": {
-    "verts": 8784,
-    "tris": 10000,
+    "verts": 8366,
+    "tris": 9990,
     "skeleton": "",
     "bones": 0,
     "name": "Arrow",
@@ -239,9 +239,9 @@ var assets = {
     "exported": "assets/exported/Arrow/Arrow.glb",
     "runtime": "assets/runtime/arrow/Arrow.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788476954751_diffuse.png",
-      "qtmesh_gen3d_1_1788476954751_normal.png",
-      "qtmesh_gen3d_1_1788476954751_roughness.png"
+      "qtmesh_gen3d_1_1788609456452_diffuse.png",
+      "qtmesh_gen3d_1_1788609456452_normal.png",
+      "qtmesh_gen3d_1_1788609456452_roughness.png"
     ],
     "clips": [],
     "format": "GLB (QtMeshEditor) → balsam .mesh + QML",

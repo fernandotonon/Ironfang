@@ -16,7 +16,7 @@ var units = {
     },
     orc_warrior: {
         displayName: "Orc Warrior", model: "assets/runtime/orc/Orc.qml", status: "qtmesheditor",
-        scale: 1.8, footOffset: 0.49, yawOffset: 0, portrait: "#5b7a3a",
+        scale: 1.8, footOffset: 0.50, yawOffset: 0, portrait: "#5b7a3a",
         clips: { idle: "Idle", walk: "Walk", attack: "Attack", hit: "Hit", death: "Death" }
     },
     orc_archer: {
@@ -39,10 +39,10 @@ var buildings = {
     clan_fortress:  { displayName: "Clan Fortress",  model: "assets/runtime/clan_fortress/ClanFortress.qml", status: "qtmesheditor", scale: 10,  footOffset: 0.29, yawOffset: 0,  portrait: "#8a5a3a" },
     war_foundry:    { displayName: "War Foundry",    model: "assets/runtime/war_foundry/WarFoundry.qml",     status: "qtmesheditor", scale: 8,   footOffset: 0.35, yawOffset: 90, portrait: "#7a4a3a" },
     enemy_fortress: { displayName: "Enemy Fortress", model: "assets/runtime/clan_fortress/ClanFortress.qml", status: "qtmesheditor", scale: 10,  footOffset: 0.29, yawOffset: 180, portrait: "#8a3a3a" },
-    iron_deposit:   { displayName: "Iron Deposit",   model: "assets/runtime/iron_deposit/IronDeposit.qml",   status: "qtmesheditor", scale: 4,   footOffset: 0.27, yawOffset: 0,  portrait: "#6a6a70" },
+    iron_deposit:   { displayName: "Iron Deposit",   model: "assets/runtime/iron_deposit/IronDeposit.qml",   status: "qtmesheditor", scale: 4,   footOffset: 0.28, yawOffset: 0,  portrait: "#6a6a70" },
     rocks_large:    { displayName: "Rocks",          model: "assets/runtime/large_rocks/LargeRocks.qml",     status: "qtmesheditor", scale: 5,   footOffset: 0.46, yawOffset: 0,  portrait: "#606064" },
-    rocks_small:    { displayName: "Rocks",          model: "assets/runtime/small_rocks/SmallRocks.qml",     status: "qtmesheditor", scale: 3,   footOffset: 0.26, yawOffset: 0,  portrait: "#606064" },
-    dead_tree:      { displayName: "Dead Ironwood",  model: "assets/runtime/dead_tree/DeadIronwoodtree.qml", status: "qtmesheditor", scale: 6,   footOffset: 0.47, yawOffset: 0,  portrait: "#4a3a30" },
+    rocks_small:    { displayName: "Rocks",          model: "assets/runtime/small_rocks/SmallRocks.qml",     status: "qtmesheditor", scale: 3,   footOffset: 0.29, yawOffset: 0,  portrait: "#606064" },
+    dead_tree:      { displayName: "Dead Ironwood",  model: "assets/runtime/dead_tree/DeadIronwoodtree.qml", status: "qtmesheditor", scale: 6,   footOffset: 0.51, yawOffset: 0,  portrait: "#4a3a30" },
     broken_cart:    { displayName: "Broken Cart",    model: "assets/runtime/broken_cart/BrokenCart.qml",     status: "qtmesheditor", scale: 4,   footOffset: 0.21, yawOffset: 0,  portrait: "#5a4a3a" }
 }
 
