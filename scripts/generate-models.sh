@@ -3,6 +3,7 @@
 #
 #   scripts/generate-models.sh            # every assets/source-images/*.png without a model
 #   scripts/generate-models.sh Orc Goblin # only these
+#   SEED=7 scripts/generate-models.sh Orc  # another seed (rm the old export first)
 #
 # Output per model: assets/exported/<Name>/<Name>.glb + .material + 4 PBR PNGs (1024x1024).
 # The full-resolution generation sidecar (<Name>_source.qtm3d, ~20 MB) is kept in
@@ -35,9 +36,19 @@ for name in "${names[@]}"; do
     [ -f "$img" ] || { echo "SKIP $name (no image)"; continue; }
     [ -s "$out" ] && { echo "SKIP $name (exists)"; continue; }
     mkdir -p "$dir"; S=$(date +%s)
-    "$Q" generate3d "$img" -o "$out" --backend trellis2 --preset "${PRESET:-fast}" \
-        --target-tris 10000 --texture-size 1024 --remove-bg --seed 42 \
-        > "assets/qtmesh-projects/logs/$name.log" 2>&1
+    # Pre-matte: our own alpha (subject only, drop shadow removed - scripts/prematte.py) so the
+    # generator does not build a slab from the shadow. PREMATTE=0 falls back to --remove-bg.
+    if [ "${PREMATTE:-1}" = "1" ]; then
+        mkdir -p assets/qtmesh-projects/matted
+        matted="assets/qtmesh-projects/matted/$name.png"
+        python3 scripts/prematte.py "$img" "$matted" >> "assets/qtmesh-projects/logs/$name.log" 2>&1
+        input="$matted"; bgflag=""
+    else
+        input="$img"; bgflag="--remove-bg"
+    fi
+    "$Q" generate3d "$input" -o "$out" --backend trellis2 --preset "${PRESET:-fast}" \
+        --target-tris 10000 --texture-size 1024 $bgflag --seed "${SEED:-42}" \
+        >> "assets/qtmesh-projects/logs/$name.log" 2>&1
     rc=$?
     if [ $rc -eq 0 ] && [ -s "$out" ]; then
         mv "$dir/${name}_source.qtm3d" assets/qtmesh-projects/sources/ 2>/dev/null || true
