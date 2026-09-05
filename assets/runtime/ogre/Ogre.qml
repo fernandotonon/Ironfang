@@ -12,34 +12,34 @@ Node {
 
     // Resources
     Texture {
-        id: qtmesh_gen3d_1_1788480558057_diffuse_png_texture
-        objectName: "qtmesh_gen3d_1_1788480558057_diffuse.png"
+        id: qtmesh_gen3d_1_1788603161353_diffuse_png_texture
+        objectName: "qtmesh_gen3d_1_1788603161353_diffuse.png"
         generateMipmaps: true
         mipFilter: Texture.Linear
-        source: "maps/qtmesh_gen3d_1_1788480558057_diffuse.png"
+        source: "maps/qtmesh_gen3d_1_1788603161353_diffuse.png"
     }
     Texture {
-        id: qtmesh_gen3d_1_1788480558057_roughness_png_texture
-        objectName: "qtmesh_gen3d_1_1788480558057_roughness.png"
+        id: qtmesh_gen3d_1_1788603161353_roughness_png_texture
+        objectName: "qtmesh_gen3d_1_1788603161353_roughness.png"
         generateMipmaps: true
         mipFilter: Texture.Linear
-        source: "maps/qtmesh_gen3d_1_1788480558057_roughness.png"
+        source: "maps/qtmesh_gen3d_1_1788603161353_roughness.png"
     }
     Texture {
-        id: qtmesh_gen3d_1_1788480558057_normal_png_texture
-        objectName: "qtmesh_gen3d_1_1788480558057_normal.png"
+        id: qtmesh_gen3d_1_1788603161353_normal_png_texture
+        objectName: "qtmesh_gen3d_1_1788603161353_normal.png"
         generateMipmaps: true
         mipFilter: Texture.Linear
-        source: "maps/qtmesh_gen3d_1_1788480558057_normal.png"
+        source: "maps/qtmesh_gen3d_1_1788603161353_normal.png"
     }
     PrincipledMaterial {
-        id: qtmesh_gen3d_1_1788480558057_mesh_mat_material
-        objectName: "qtmesh_gen3d_1_1788480558057_mesh_mat"
-        baseColorMap: qtmesh_gen3d_1_1788480558057_diffuse_png_texture
-        metalnessMap: qtmesh_gen3d_1_1788480558057_roughness_png_texture
-        roughnessMap: qtmesh_gen3d_1_1788480558057_roughness_png_texture
+        id: qtmesh_gen3d_1_1788603161353_mesh_mat_material
+        objectName: "qtmesh_gen3d_1_1788603161353_mesh_mat"
+        baseColorMap: qtmesh_gen3d_1_1788603161353_diffuse_png_texture
+        metalnessMap: qtmesh_gen3d_1_1788603161353_roughness_png_texture
+        roughnessMap: qtmesh_gen3d_1_1788603161353_roughness_png_texture
         roughness: 1
-        normalMap: qtmesh_gen3d_1_1788480558057_normal_png_texture
+        normalMap: qtmesh_gen3d_1_1788603161353_normal_png_texture
         alphaMode: PrincipledMaterial.Opaque
     }
     Skin {
@@ -66,73 +66,73 @@ Node {
             rightFoot
         ]
         inverseBindPoses: [
-            Qt.matrix4x4(1, 0, 0, -0.000358624, 0, 1, 0, -0.0157911, 0, 0, 1, -0.0160526, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, 0.00179901, 0, 1, 0, -0.100097, 0, 0, 1, 0.0166031, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, 0.0073983, 0, 1, 0, -0.184402, 0, 0, 1, 0.0253438, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, -0.0173156, 0, 1, 0, -0.234985, 0, 0, 1, 0.0191744, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, 0.0328065, 0, 1, 0, -0.234985, 0, 0, 1, 0.0191744, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, -0.20056, 0, 1, 0, -0.234985, 0, 0, 1, 0.000948789, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, 0.200416, 0, 1, 0, -0.234985, 0, 0, 1, 0.000948789, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, -0.0217466, 0, 1, 0, 0.00106999, 0, 0, 1, -0.0170456, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, 0.0183511, 0, 1, 0, 0.00106999, 0, 0, 1, -0.0170456, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, 0.00699692, 0, 1, 0, -0.285569, 0, 0, 1, 0.0157218, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, -0.320853, 0, 1, 0, -0.234985, 0, 0, 1, 0.000948789, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, 0.320709, 0, 1, 0, -0.234985, 0, 0, 1, 0.000948789, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, -0.0802674, 0, 1, 0, 0.194973, 0, 0, 1, 0.000948787, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, 0.0801232, 0, 1, 0, 0.194973, 0, 0, 1, 0.000948787, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, 0.00148573, 0, 1, 0, -0.353013, 0, 0, 1, 0.0153369, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, -0.431122, 0, 1, 0, -0.234985, 0, 0, 1, 0.000948789, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, 0.430978, 0, 1, 0, -0.234985, 0, 0, 1, 0.000948789, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, -0.0802674, 0, 1, 0, 0.388875, 0, 0, 1, -0.0152916, 0, 0, 0, 1),
-            Qt.matrix4x4(1, 0, 0, 0.0801232, 0, 1, 0, 0.388875, 0, 0, 1, -0.0152916, 0, 0, 0, 1)
+            Qt.matrix4x4(1, 0, 0, -0.00148448, 0, 1, 0, -0.0148899, 0, 0, 1, 0.0146116, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, -0.0025461, 0, 1, 0, -0.0993906, 0, 0, 1, -0.0144583, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, 0.00585788, 0, 1, 0, -0.183891, 0, 0, 1, -0.0186097, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, -0.0239536, 0, 1, 0, -0.234592, 0, 0, 1, -0.0144826, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, 0.0261217, 0, 1, 0, -0.234592, 0, 0, 1, -0.0144826, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, -0.20064, 0, 1, 0, -0.234592, 0, 0, 1, 0.000909708, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, 0.199962, 0, 1, 0, -0.234592, 0, 0, 1, 0.000909708, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, -0.0190682, 0, 1, 0, 0.00201018, 0, 0, 1, 0.016971, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, 0.0209921, 0, 1, 0, 0.00201018, 0, 0, 1, 0.016971, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, 0.0021241, 0, 1, 0, -0.285292, 0, 0, 1, -0.0156706, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, -0.320821, 0, 1, 0, -0.234592, 0, 0, 1, 0.000909708, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, 0.320143, 0, 1, 0, -0.234592, 0, 0, 1, 0.000909708, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, -0.0804595, 0, 1, 0, 0.196362, 0, 0, 1, 0.000909708, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, 0.0797816, 0, 1, 0, 0.196362, 0, 0, 1, 0.000909708, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, 0.00508056, 0, 1, 0, -0.352892, 0, 0, 1, -0.0152438, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, -0.430987, 0, 1, 0, -0.234592, 0, 0, 1, 0.000909708, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, 0.430309, 0, 1, 0, -0.234592, 0, 0, 1, 0.000909708, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, -0.0804595, 0, 1, 0, 0.390713, 0, 0, 1, -0.015116, 0, 0, 0, 1),
+            Qt.matrix4x4(1, 0, 0, 0.0797816, 0, 1, 0, 0.390713, 0, 0, 1, -0.015116, 0, 0, 0, 1)
         ]
     }
 
     // Nodes:
     Node {
-        id: ogre_rigged
-        objectName: "Ogre_rigged"
+        id: a9
+        objectName: "a9"
         Node {
             id: ogre
             objectName: "Ogre"
             Node {
                 id: hips
                 objectName: "Hips"
-                position: Qt.vector3d(0.000358624, 0.0157911, 0.0160526)
+                position: Qt.vector3d(0.00148448, 0.0148899, -0.0146116)
                 Node {
                     id: spine
                     objectName: "Spine"
-                    position: Qt.vector3d(-0.00215764, 0.0843055, -0.0326557)
+                    position: Qt.vector3d(0.00106162, 0.0845006, 0.02907)
                     Node {
                         id: chest
                         objectName: "Chest"
-                        position: Qt.vector3d(-0.00559929, 0.0843055, -0.00874075)
+                        position: Qt.vector3d(-0.00840398, 0.0845006, 0.0041514)
                         Node {
                             id: neck
                             objectName: "Neck"
-                            position: Qt.vector3d(0.000401379, 0.101167, 0.00962198)
+                            position: Qt.vector3d(0.00373377, 0.101401, -0.00293914)
                             Node {
                                 id: head
                                 objectName: "Head"
-                                position: Qt.vector3d(0.0055112, 0.0674444, 0.000384908)
+                                position: Qt.vector3d(-0.00295646, 0.0676005, -0.000426819)
                             }
                         }
                         Node {
                             id: leftShoulder
                             objectName: "LeftShoulder"
-                            position: Qt.vector3d(0.0247139, 0.0505833, 0.00616946)
+                            position: Qt.vector3d(0.0298115, 0.0507004, -0.00412708)
                             Node {
                                 id: leftArm
                                 objectName: "LeftArm"
-                                position: Qt.vector3d(0.183245, 0, 0.0182256)
+                                position: Qt.vector3d(0.176687, 0, -0.0153923)
                                 Node {
                                     id: leftForeArm
                                     objectName: "LeftForeArm"
-                                    position: Qt.vector3d(0.120293, 0, 0)
+                                    position: Qt.vector3d(0.120181, 0, 0)
                                     Node {
                                         id: leftHand
                                         objectName: "LeftHand"
-                                        position: Qt.vector3d(0.110269, 0, 0)
+                                        position: Qt.vector3d(0.110166, 0, 0)
                                     }
                                 }
                             }
@@ -140,19 +140,19 @@ Node {
                         Node {
                             id: rightShoulder
                             objectName: "RightShoulder"
-                            position: Qt.vector3d(-0.0254082, 0.0505833, 0.00616946)
+                            position: Qt.vector3d(-0.0202638, 0.0507004, -0.00412708)
                             Node {
                                 id: rightArm
                                 objectName: "RightArm"
-                                position: Qt.vector3d(-0.16761, 0, 0.0182256)
+                                position: Qt.vector3d(-0.173841, 0, -0.0153923)
                                 Node {
                                     id: rightForeArm
                                     objectName: "RightForeArm"
-                                    position: Qt.vector3d(-0.120293, 0, 0)
+                                    position: Qt.vector3d(-0.120181, 0, 0)
                                     Node {
                                         id: rightHand
                                         objectName: "RightHand"
-                                        position: Qt.vector3d(-0.110269, 0, 0)
+                                        position: Qt.vector3d(-0.110166, 0, 0)
                                     }
                                 }
                             }
@@ -162,43 +162,43 @@ Node {
                 Node {
                     id: leftUpLeg
                     objectName: "LeftUpLeg"
-                    position: Qt.vector3d(0.0213879, -0.0168611, 0.000992997)
+                    position: Qt.vector3d(0.0175837, -0.0169001, -0.00235933)
                     Node {
                         id: leftLeg
                         objectName: "LeftLeg"
-                        position: Qt.vector3d(0.0585209, -0.193903, -0.0179944)
+                        position: Qt.vector3d(0.0613913, -0.194351, 0.0160613)
                         Node {
                             id: leftFoot
                             objectName: "LeftFoot"
-                            position: Qt.vector3d(0, -0.193903, 0.0162403)
+                            position: Qt.vector3d(0, -0.194351, 0.0160257)
                         }
                     }
                 }
                 Node {
                     id: rightUpLeg
                     objectName: "RightUpLeg"
-                    position: Qt.vector3d(-0.0187097, -0.0168611, 0.000992997)
+                    position: Qt.vector3d(-0.0224766, -0.0169001, -0.00235933)
                     Node {
                         id: rightLeg
                         objectName: "RightLeg"
-                        position: Qt.vector3d(-0.0617721, -0.193903, -0.0179944)
+                        position: Qt.vector3d(-0.0587895, -0.194351, 0.0160613)
                         Node {
                             id: rightFoot
                             objectName: "RightFoot"
-                            position: Qt.vector3d(0, -0.193903, 0.0162403)
+                            position: Qt.vector3d(0, -0.194351, 0.0160257)
                         }
                     }
                 }
             }
         }
         Model {
-            id: ogre_rigged_mesh
-            objectName: "Ogre_rigged_mesh"
+            id: a9_mesh
+            objectName: "a9_mesh"
             source: "meshes/meshes_0__mesh.mesh"
             pickable: true
             skin: skin
             materials: [
-                qtmesh_gen3d_1_1788480558057_mesh_mat_material
+                qtmesh_gen3d_1_1788603161353_mesh_mat_material
             ]
         }
     }
@@ -255,11 +255,6 @@ Node {
             target: rightForeArm
             property: "rotation"
             keyframeSource: "animations/rightForeArm_rotation_0.qad"
-        }
-        KeyframeGroup {
-            target: neck
-            property: "rotation"
-            keyframeSource: "animations/neck_rotation_0.qad"
         }
         KeyframeGroup {
             target: rightUpLeg
@@ -430,17 +425,27 @@ Node {
         objectName: "Hit"
         property real framesPerSecond: 1000
         startFrame: 0
-        endFrame: 1967
+        endFrame: 767
         currentFrame: 0
         enabled: node.clip === "Hit"
         animations: TimelineAnimation {
-            duration: 1967
+            duration: 767
             from: 0
-            to: 1967
+            to: 767
             running: node.clip === "Hit"
             loops: 1
             // deferred: the handler usually switches `clip`, which drives `running`
             onFinished: Qt.callLater(function() { if (node) node.clipFinished("Hit") })
+        }
+        KeyframeGroup {
+            target: rightFoot
+            property: "rotation"
+            keyframeSource: "animations/rightFoot_rotation_2.qad"
+        }
+        KeyframeGroup {
+            target: leftFoot
+            property: "rotation"
+            keyframeSource: "animations/leftFoot_rotation_2.qad"
         }
         KeyframeGroup {
             target: rightHand
@@ -466,11 +471,6 @@ Node {
             target: rightForeArm
             property: "rotation"
             keyframeSource: "animations/rightForeArm_rotation_2.qad"
-        }
-        KeyframeGroup {
-            target: neck
-            property: "rotation"
-            keyframeSource: "animations/neck_rotation_2.qad"
         }
         KeyframeGroup {
             target: rightUpLeg
@@ -506,11 +506,6 @@ Node {
             target: leftShoulder
             property: "rotation"
             keyframeSource: "animations/leftShoulder_rotation_2.qad"
-        }
-        KeyframeGroup {
-            target: chest
-            property: "rotation"
-            keyframeSource: "animations/chest_rotation_2.qad"
         }
         KeyframeGroup {
             target: spine
@@ -574,11 +569,6 @@ Node {
             keyframeSource: "animations/rightForeArm_rotation_3.qad"
         }
         KeyframeGroup {
-            target: neck
-            property: "rotation"
-            keyframeSource: "animations/neck_rotation_3.qad"
-        }
-        KeyframeGroup {
             target: rightUpLeg
             property: "rotation"
             keyframeSource: "animations/rightUpLeg_rotation_3.qad"
@@ -634,13 +624,13 @@ Node {
         objectName: "Walk"
         property real framesPerSecond: 1000
         startFrame: 0
-        endFrame: 1034
+        endFrame: 967
         currentFrame: 0
         enabled: node.clip === "Walk"
         animations: TimelineAnimation {
-            duration: 1034
+            duration: 967
             from: 0
-            to: 1034
+            to: 967
             running: node.clip === "Walk"
             loops: Animation.Infinite
         }

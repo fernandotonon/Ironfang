@@ -10,45 +10,45 @@ Node {
 
     // Resources
     Texture {
-        id: qtmesh_gen3d_1_1788479538976_diffuse_png_texture
-        objectName: "qtmesh_gen3d_1_1788479538976_diffuse.png"
+        id: qtmesh_gen3d_1_1788606390803_diffuse_png_texture
+        objectName: "qtmesh_gen3d_1_1788606390803_diffuse.png"
         generateMipmaps: true
         mipFilter: Texture.Linear
-        source: "maps/qtmesh_gen3d_1_1788479538976_diffuse.png"
+        source: "maps/qtmesh_gen3d_1_1788606390803_diffuse.png"
     }
     Texture {
-        id: qtmesh_gen3d_1_1788479538976_roughness_png_texture
-        objectName: "qtmesh_gen3d_1_1788479538976_roughness.png"
+        id: qtmesh_gen3d_1_1788606390803_roughness_png_texture
+        objectName: "qtmesh_gen3d_1_1788606390803_roughness.png"
         generateMipmaps: true
         mipFilter: Texture.Linear
-        source: "maps/qtmesh_gen3d_1_1788479538976_roughness.png"
+        source: "maps/qtmesh_gen3d_1_1788606390803_roughness.png"
     }
     Texture {
-        id: qtmesh_gen3d_1_1788479538976_normal_png_texture
-        objectName: "qtmesh_gen3d_1_1788479538976_normal.png"
+        id: qtmesh_gen3d_1_1788606390803_normal_png_texture
+        objectName: "qtmesh_gen3d_1_1788606390803_normal.png"
         generateMipmaps: true
         mipFilter: Texture.Linear
-        source: "maps/qtmesh_gen3d_1_1788479538976_normal.png"
+        source: "maps/qtmesh_gen3d_1_1788606390803_normal.png"
     }
     PrincipledMaterial {
-        id: qtmesh_gen3d_1_1788479538976_mesh_mat_material
-        objectName: "qtmesh_gen3d_1_1788479538976_mesh_mat"
-        baseColorMap: qtmesh_gen3d_1_1788479538976_diffuse_png_texture
-        metalnessMap: qtmesh_gen3d_1_1788479538976_roughness_png_texture
-        roughnessMap: qtmesh_gen3d_1_1788479538976_roughness_png_texture
+        id: qtmesh_gen3d_1_1788606390803_mesh_mat_material
+        objectName: "qtmesh_gen3d_1_1788606390803_mesh_mat"
+        baseColorMap: qtmesh_gen3d_1_1788606390803_diffuse_png_texture
+        metalnessMap: qtmesh_gen3d_1_1788606390803_roughness_png_texture
+        roughnessMap: qtmesh_gen3d_1_1788606390803_roughness_png_texture
         roughness: 1
-        normalMap: qtmesh_gen3d_1_1788479538976_normal_png_texture
+        normalMap: qtmesh_gen3d_1_1788606390803_normal_png_texture
         alphaMode: PrincipledMaterial.Opaque
     }
 
     // Nodes:
     Model {
-        id: qtmesh_gen3d_1_1788479538976
-        objectName: "qtmesh_gen3d_1_1788479538976"
+        id: qtmesh_gen3d_1_1788606390803
+        objectName: "qtmesh_gen3d_1_1788606390803"
         source: "meshes/meshes_0__mesh.mesh"
         pickable: true
         materials: [
-            qtmesh_gen3d_1_1788479538976_mesh_mat_material
+            qtmesh_gen3d_1_1788606390803_mesh_mat_material
         ]
     }
 
