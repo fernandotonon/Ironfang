@@ -57,15 +57,15 @@ var assets = {
     "verts": 10539,
     "tris": 9918,
     "skeleton": "",
-    "bones": 20,
+    "bones": 64,
     "name": "Orc Archer",
     "source": "assets/source-images/Orc Archer.png",
     "exported": "assets/exported/Orc Archer/Orc Archer.glb",
     "runtime": "assets/runtime/orc_archer/OrcArcher.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788480777013_diffuse.png",
-      "qtmesh_gen3d_1_1788480777013_normal.png",
-      "qtmesh_gen3d_1_1788480777013_roughness.png"
+      "qtmesh_gen3d_3_1788580202226_diffuse.png",
+      "qtmesh_gen3d_3_1788580202226_normal.png",
+      "qtmesh_gen3d_3_1788580202226_roughness.png"
     ],
     "clips": [
       "Attack",

@@ -11,3 +11,4 @@ assets/qtmesh-projects/logs/
 # Web runtime binaries are downloaded, not committed
 /web-runtime/*.wasm
 /web-runtime/*.js
+/.regen-backup/
