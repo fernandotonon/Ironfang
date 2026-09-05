@@ -11,7 +11,7 @@
 var units = {
     goblin_worker: {
         displayName: "Goblin Worker", model: "assets/runtime/goblin/Goblin.qml", status: "qtmesheditor",
-        scale: 1.35, footOffset: 0.51, yawOffset: 0, portrait: "#7fa64a",
+        scale: 1.35, footOffset: 0.39, yawOffset: 0, portrait: "#7fa64a",
         clips: { idle: "Idle", walk: "Walk", attack: "Attack", hit: "Hit", death: "Death", gather: "Gather" }
     },
     orc_warrior: {

@@ -8,14 +8,21 @@
 # The full-resolution generation sidecar (<Name>_source.qtm3d, ~20 MB) is kept in
 # assets/qtmesh-projects/sources/ (gitignored) so textures/LODs can be re-baked later.
 #
-# Backend on this machine: trellis.cpp (Metal) via QTMESH_TRELLIS2_CLI; only the 512 GGUF
-# weights are installed, so --preset high falls back to the 512 pipeline with a warning.
+# Backend on this machine: trellis.cpp (Metal) with the 512 and 1024-cascade GGUF weights.
+# PRESET defaults to "fast" (= the 512 pipeline): "balanced" (1024) and "high" (1536) both hang
+# in a Metal command buffer that never completes on this 24 GB Mac (2026-09-05), so the cascade
+# is not usable here yet. Everything else (10k tris, 1024 textures, bake, matte) is unchanged.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 export QTMESH_NO_TELEMETRY=1
+# trellis-cli: the fork build with --dump-post (QtMeshEditor's raw-mesh handshake). The CLI
+# bundled by the 3.37.x dev build does not know --dump-post yet, so it is not used here.
 export QTMESH_TRELLIS2_CLI="${QTMESH_TRELLIS2_CLI:-$HOME/trellis.cpp/build-cpu/trellis-cli}"
 export QTMESH_TRELLIS2_CLI_MODELS="${QTMESH_TRELLIS2_CLI_MODELS:-$HOME/trellis.cpp/models}"
-Q="${QTMESH:-/opt/homebrew/bin/qtmesheditor}"
+# prefer a local development build of QtMeshEditor when present (newest TRELLIS.2 pipeline)
+DEV_Q="$HOME/QtMeshEditor/build_local/bin/QtMeshEditor.app/Contents/MacOS/QtMeshEditor"
+Q="${QTMESH:-$([ -x "$DEV_Q" ] && echo "$DEV_Q" || echo /opt/homebrew/bin/qtmesheditor)}"
+echo "using $Q ($($Q --version 2>/dev/null | head -1)), trellis-cli $QTMESH_TRELLIS2_CLI, preset ${PRESET:-fast}"
 
 mkdir -p assets/exported assets/qtmesh-projects/sources assets/qtmesh-projects/logs
 if [ $# -gt 0 ]; then names=("$@"); else
@@ -28,7 +35,7 @@ for name in "${names[@]}"; do
     [ -f "$img" ] || { echo "SKIP $name (no image)"; continue; }
     [ -s "$out" ] && { echo "SKIP $name (exists)"; continue; }
     mkdir -p "$dir"; S=$(date +%s)
-    "$Q" generate3d "$img" -o "$out" --backend trellis2 --preset high \
+    "$Q" generate3d "$img" -o "$out" --backend trellis2 --preset "${PRESET:-fast}" \
         --target-tris 10000 --texture-size 1024 --remove-bg --seed 42 \
         > "assets/qtmesh-projects/logs/$name.log" 2>&1
     rc=$?
