@@ -19,7 +19,7 @@ import sys
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 
-def prematte(src, threshold=60):
+def prematte(src, threshold=60, hole_threshold=14):
     im = Image.open(src).convert("RGB")
     w, h = im.size
     px = im.load()
@@ -42,14 +42,29 @@ def prematte(src, threshold=60):
     for s in seeds:
         if cand.getpixel(s) == 0:
             ImageDraw.floodfill(cand, s, 128)
-    # alpha: everything not reached by the flood is subject (enclosed low-contrast pixels too)
+    # Enclosed regions the flood could not reach: keep them opaque (grey armour, highlights)
+    # unless they are practically the background colour and reasonably large - those are gaps
+    # (between the bars of a rack, inside a brazier) the model must see through.
+    near = dist.point(lambda v: 255 if v <= hole_threshold else 0).convert("L")
+    enclosed = ImageChops.multiply(cand.point(lambda v: 255 if v == 0 else 0), near)  # 0-valued & near bg
+    min_area = max(400, int(0.002 * w * h))
+    pix = enclosed.load()
+    for y in range(0, h, 2):
+        for x in range(0, w, 2):
+            if pix[x, y] == 255:
+                before = enclosed.histogram()[255]
+                ImageDraw.floodfill(enclosed, (x, y), 64)
+                area = before - enclosed.histogram()[255]
+                if area >= min_area:
+                    ImageDraw.floodfill(cand, (x, y), 128)          # promote to background
+    # alpha: everything not reached by the floods is subject
     alpha = cand.point(lambda v: 0 if v == 128 else 255)
     # remove specks / thin shadow slivers, then restore size, then feather
     alpha = alpha.filter(ImageFilter.MinFilter(5)).filter(ImageFilter.MaxFilter(5))
     alpha = alpha.filter(ImageFilter.GaussianBlur(0.8))
     out = im.copy()
     out.putalpha(alpha)
-    coverage = sum(1 for v in alpha.getdata() if v > 128) / (w * h)
+    coverage = sum(alpha.histogram()[129:]) / (w * h)
     return out, bg, coverage
 
 
@@ -57,9 +72,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("src"); ap.add_argument("dst")
     ap.add_argument("--threshold", type=int, default=60)
+    ap.add_argument("--hole-threshold", type=int, default=14, help="enclosed regions within this distance of the background become holes")
     ap.add_argument("--preview", help="write the matte composited over magenta for a visual check")
     a = ap.parse_args()
-    out, bg, cov = prematte(a.src, a.threshold)
+    out, bg, cov = prematte(a.src, a.threshold, a.hole_threshold)
     out.save(a.dst, optimize=True)
     if a.preview:
         prev = Image.new("RGB", out.size, (255, 0, 255))
