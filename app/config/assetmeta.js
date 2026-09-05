@@ -6,15 +6,15 @@ var assets = {
     "verts": 10906,
     "tris": 9964,
     "skeleton": "",
-    "bones": 20,
+    "bones": 62,
     "name": "Goblin",
     "source": "assets/source-images/Goblin.png",
     "exported": "assets/exported/Goblin/Goblin.glb",
     "runtime": "assets/runtime/goblin/Goblin.qml",
     "textures": [
-      "qtmesh_gen3d_1_1788479224751_diffuse.png",
-      "qtmesh_gen3d_1_1788479224751_normal.png",
-      "qtmesh_gen3d_1_1788479224751_roughness.png"
+      "qtmesh_gen3d_2_1788575330441_diffuse.png",
+      "qtmesh_gen3d_2_1788575330441_normal.png",
+      "qtmesh_gen3d_2_1788575330441_roughness.png"
     ],
     "clips": [
       "Attack",
