@@ -36,7 +36,7 @@
   <div class="bar"><div id="bar"></div></div>
   <div class="status" id="status">Preparing…</div>
   <div class="hint">Built with Clayground · Assets created and processed with QtMeshEditor<br>
-    The first visit downloads the engine (about 37 MB) and the models; later visits load from cache.</div>
+    The first visit downloads the engine (about 38 MB) and the models; later visits load from cache.</div>
 </div>
 <div id="screen"></div>
 <script src="qtloader.js"></script>
@@ -47,7 +47,7 @@
   const screen = document.getElementById('screen');
   const bar = document.getElementById('bar');
   const status = document.getElementById('status');
-  const WASM_BYTES = 39182482;           // uncompressed size, written at build time
+  const WASM_BYTES = 39712965;           // uncompressed size, written at build time
   const HAS_MANIFEST = true;
   const setProgress = (fraction, text) => { bar.style.width = (Math.max(0, Math.min(1, fraction)) * 100).toFixed(1) + '%'; status.textContent = text; };
   const mb = b => (b / 1048576).toFixed(1);
