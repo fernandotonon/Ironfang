@@ -13,24 +13,24 @@ Node {
     // Resources
     Texture {
         id: qtmesh_gen3d_2_1788575330441_diffuse_png_texture
-        objectName: "qtmesh_gen3d_2_1788575330441_diffuse.png"
+        objectName: "qtmesh_gen3d_2_1788575330441_diffuse.jpg"
         generateMipmaps: true
         mipFilter: Texture.Linear
-        source: "maps/qtmesh_gen3d_2_1788575330441_diffuse.png"
+        source: "maps/qtmesh_gen3d_2_1788575330441_diffuse.jpg"
     }
     Texture {
         id: qtmesh_gen3d_2_1788575330441_roughness_png_texture
-        objectName: "qtmesh_gen3d_2_1788575330441_roughness.png"
+        objectName: "qtmesh_gen3d_2_1788575330441_roughness.jpg"
         generateMipmaps: true
         mipFilter: Texture.Linear
-        source: "maps/qtmesh_gen3d_2_1788575330441_roughness.png"
+        source: "maps/qtmesh_gen3d_2_1788575330441_roughness.jpg"
     }
     Texture {
         id: qtmesh_gen3d_2_1788575330441_normal_png_texture
-        objectName: "qtmesh_gen3d_2_1788575330441_normal.png"
+        objectName: "qtmesh_gen3d_2_1788575330441_normal.jpg"
         generateMipmaps: true
         mipFilter: Texture.Linear
-        source: "maps/qtmesh_gen3d_2_1788575330441_normal.png"
+        source: "maps/qtmesh_gen3d_2_1788575330441_normal.jpg"
     }
     PrincipledMaterial {
         id: qtmesh_gen3d_2_1788575330441_mesh_mat_material
