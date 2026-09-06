@@ -180,7 +180,7 @@ this spike except the authored 3D models, for two reasons found while testing:
    URL - served over http, `Model { source: "meshes/x.mesh" }` renders nothing and
    `RuntimeLoader` reports `IO Error: File not found` without any request being made.
 
-Fix contributed upstream: **[MisterGC/clayground#215](https://github.com/MisterGC/clayground/pull/215)**
+Fix contributed upstream and **merged into `release/2026.7` on 2026-09-06**: **[MisterGC/clayground#215](https://github.com/MisterGC/clayground/pull/215)**
 links both modules and lets the app shell preload files listed in an `assets-manifest.json`
 into the runtime's in-memory filesystem (`/game/`), referenced as `file:///game/<path>`.
 Verified here with a locally built runtime: `scripts/pack-web-runtime.sh <starter-dir>`

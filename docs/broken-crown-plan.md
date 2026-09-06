@@ -143,7 +143,8 @@ compare with the previous milestone → fix regressions → report → separate 
 * **Team model** for rescue/capture needs an `owner` change path on `UnitView`/`BuildingView`
   (team ring colour, selection filters use `team === "player"`) — planned for M4/M5, not M1.
 * **Unit limits**: keep ≤ 40 simultaneous units on wasm unless profiling shows headroom.
-* **Clayground upstream**: Web Runtime PR #215 pending; none of this plan depends on it.
+* **Clayground upstream**: Web Runtime PR #215 merged into `release/2026.7` on 2026-09-06; the
+  next Clayground release lets the Web Runtime path serve Ironfang without a local toolchain.
 
 ## 9. Milestone log
 
