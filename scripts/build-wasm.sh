@@ -49,12 +49,14 @@ cp external/clayground/docs/coi-serviceworker.js "$DEPLOY_DIR/"
 # preload them into the in-memory filesystem (/game/assets/...) - see ironfang-assets.json.
 mkdir -p "$DEPLOY_DIR/assets" && cp -R assets/runtime "$DEPLOY_DIR/assets/"
 find "$DEPLOY_DIR/assets" -name .DS_Store -delete
+# web-only: opaque PNG textures -> JPEG (about 6x smaller), QML references rewritten in the copy
+python3 scripts/web-optimize-assets.py "$DEPLOY_DIR/assets"
 ( cd "$DEPLOY_DIR" && find assets -type f | sort | python3 -c '
 import json, sys
 files = [l.strip() for l in sys.stdin if l.strip()]
 json.dump([{"source": f, "destination": "/game/" + f} for f in files], open("ironfang-assets.json", "w"))
 print(f"preload manifest: {len(files)} files")' )
-# index.html = Qt's generated shell + COOP/COEP service-worker shim + ?args= support + preload
+# index.html = Ironfang's shell (web/index.template.html): loading screen, progress, COOP/COEP shim, ?args=
 python3 scripts/make-web-index.py "$DEPLOY_DIR" ironfang
 du -sh "$DEPLOY_DIR"/* | sed 's|^|  |'
 echo

@@ -134,6 +134,12 @@ cross-origin isolated: send `Cross-Origin-Opener-Policy: same-origin` and
 keep the bundled `coi-serviceworker.js`. `.wasm` must be served as `application/wasm`.
 Opening `index.html` from disk does not work. Full list: `docs/feasibility-report.md`.
 
+`index.html` is Ironfang's own shell (`web/index.template.html`, rendered by
+`scripts/make-web-index.py`): a loading screen with the rotating Ironfang turntable, a progress
+bar fed by the streamed engine download and the asset preload, then the game. The 37 MB engine
+is a single WebAssembly module and has to arrive before the first QML frame, so the title
+screen cannot show earlier than that; the models (23 MB) load in parallel and are cached.
+
 ## Remaining placeholders and known gaps
 
 Every unit, building and prop in the game is a QtMeshEditor-generated model (no Box3D
@@ -144,7 +150,8 @@ an entry in `config/assets.js` has no model). Open items:
   enemy fortress image → model is a one-command job with `scripts/generate-models.sh`.
 * Hand-held weapons (Hammer, Cleaver, Bow, Pickaxe, Shield) are generated but not attached to
   the rigs; the archer's arrow is the only prop in use.
-* No LODs, uncompressed 1024² PNG textures (about 47 MB of assets on the web), no shadows.
+* No LODs, no KTX2: 1024² textures are PNG in the repo and re-encoded to JPEG for the web deploy
+  (`scripts/web-optimize-assets.py`, about 23 MB of assets), no shadows.
 * Effects are flashes and rings; no particles. Clip loops are untuned (`Idle`/`Walk` seams).
 * Audio: Clayground.Sound playback (`Sound.play()` and `Music`) freezes the page on WebAssembly
   (clayground#216), so the **web build is silent** for now; desktop has full audio (the loop is a

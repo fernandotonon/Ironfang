@@ -68,6 +68,31 @@ Build quirks found and fixed (all captured in `CMakePresets.json` / `CMakeLists.
   `ironfang-assets.json`); the app reads them as `file:///game/...`. The wasm shrank from 40 to
   37 MB and assets download in parallel and cache independently. The Clayground Web Runtime path
   uses the same convention (`assets-manifest.json`, PR #215).
+* The deploy copy of the textures is re-encoded PNG → JPEG (`scripts/web-optimize-assets.py`,
+  quality 84, normals 90 without chroma subsampling; textures with real alpha stay PNG). The
+  TRELLIS.2 maps are opaque, so nothing visible changes; web assets shrank from 54 to 23 MB.
+
+## Loading screen and load-time options
+
+`index.html` is generated from `web/index.template.html`. It fetches `ironfang.wasm` itself with
+a streaming reader (progress 0–70 %), compiles it and hands the module to Qt's loader via
+`config.qt.module`; Emscripten's `monitorRunDependencies` then reports the asset preload
+(70–100 %, "Loading models n / N"). A 24-frame turntable of the Ironfang prop (rendered by
+QtMeshEditor, 46 KB WebP sprite) spins meanwhile. Verified with
+`node scripts/browser-check.mjs <url> --throttle 20` (`docs/screenshots/web-loading.png`).
+
+What can and cannot be split:
+
+* The engine (Qt + Quick 3D + Clayground + the app) is one wasm module; the browser cannot start
+  executing QML before all of it has arrived and compiled. Qt has no incremental module loading
+  on the web, so a "title screen first, engine later" split is not possible without a second,
+  separate web page written in HTML — which is what the loading overlay is.
+* Assets are already separate from the engine and cached independently. They could be loaded
+  lazily per phase (title → match models → showcase) with `FS.createPreloadedFile` at runtime,
+  but at 23 MB total in parallel with a 37 MB engine this would gain only the ~1 s the preload
+  costs after the engine is ready, so it is not done.
+* Realistic further wins: pre-compressed brotli (15.1 MB) on a host that supports it, `-Oz`
+  linking, or dropping Quick3D modules the game does not use. GitHub Pages does none of these.
 
 ## Texture format and size
 
@@ -128,7 +153,7 @@ Scripted match (`--autotest`, 8× simulation speed, 19 buildings, up to 15 units
 | FPS during the whole match | 112–120 (11 for the first second while models load) | 53–60 |
 | Simulation cost, 8 steps per frame | 2–9 ms (≈ 0.3–1.1 ms per step) | 2–5 ms |
 | Time to first frame (local server) | < 1 s | ≈ 2.3 s incl. 417 preloaded asset files |
-| Download | n/a | 37 MB wasm + 47 MB assets (separate, cacheable) |
+| Download | n/a | 37 MB wasm (17.9 MB gzip on the wire) + 23 MB assets (JPEG textures; separate, cacheable) |
 | Match shape at 8× | gather → 3 warriors → wave 1 at ~2 min → siege → defeat/victory → restart OK | same |
 
 ## Static hosting requirements

@@ -23,6 +23,8 @@ const probeModules = (opt("--probe-modules", "") || "").split(/\s+/).filter(Bool
 // wait N more seconds before the screenshot - the real user path, not the scripted one.
 const click = (opt("--click", "") || "").split(",").map(Number).filter(n => !Number.isNaN(n));
 const afterClick = Number(opt("--after", 15));
+// --throttle MBPS: emulate a slow network (e.g. 4) to observe the loading screen mid-download.
+const throttle = Number(opt("--throttle", 0));
 // --probe-qml file.qml: load an arbitrary QML snippet into the Web Runtime after the wait.
 const probeQmlFile = opt("--probe-qml", "");
 const port = 9333;
@@ -65,6 +67,7 @@ try {
   };
   const names = {};
   await send("Runtime.enable"); await send("Network.enable"); await send("Page.enable");
+  if (throttle > 0) await send("Network.emulateNetworkConditions", { offline: false, latency: 40, downloadThroughput: throttle * 1048576 / 8, uploadThroughput: 1048576 });
   t0 = Date.now();
   await send("Page.navigate", { url });
   await sleep(seconds * 1000);

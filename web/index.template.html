@@ -1,0 +1,115 @@
+<!doctype html>
+<!-- Ironfang: First Siege - web shell. Generated into deploy/ by scripts/make-web-index.py.
+     Shows a real loading screen while the engine downloads and the assets preload. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Ironfang: First Siege</title>
+<script src="coi-serviceworker.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #1f2021;
+               touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+  #screen { width: 100%; height: 100%; display: none; }
+  #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+             justify-content: center; background: radial-gradient(ellipse at center, #2a2c30 0%, #1f2021 70%);
+             color: #f2e2c4; font: 14px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; z-index: 10; }
+  #loading.hidden { opacity: 0; pointer-events: none; transition: opacity .6s ease; }
+  .title { color: #e0b24a; font-size: 40px; font-weight: 700; letter-spacing: 8px; margin: 0 0 4px; }
+  .subtitle { color: #f2e2c4; font-size: 16px; letter-spacing: 5px; margin: 0 0 28px; }
+  .turntable { width: 240px; height: 240px; background: url(loading-ironfang.webp) 0 0 / 5760px 240px no-repeat;
+               animation: spin 2.4s steps(24) infinite; border-radius: 50%;
+               box-shadow: 0 0 60px rgba(224,178,74,.12); margin-bottom: 26px; }
+  @keyframes spin { to { background-position: -5760px 0; } }
+  .bar { width: min(420px, 80vw); height: 10px; background: #2b2418; border: 1px solid #7a5a2a; border-radius: 5px; overflow: hidden; }
+  .bar > div { height: 100%; width: 0%; background: linear-gradient(90deg, #c9973b, #e0b24a); transition: width .25s; }
+  .status { margin-top: 10px; color: #9aa0a6; font-size: 13px; min-height: 1.4em; }
+  .hint { position: absolute; bottom: 22px; color: #6f7580; font-size: 12px; text-align: center; padding: 0 20px; }
+  .error { color: #c9432e; }
+</style>
+</head>
+<body>
+<div id="loading">
+  <p class="title">IRONFANG</p>
+  <p class="subtitle">FIRST SIEGE</p>
+  <div class="turntable" aria-hidden="true"></div>
+  <div class="bar"><div id="bar"></div></div>
+  <div class="status" id="status">Preparing…</div>
+  <div class="hint">Built with Clayground · Assets created and processed with QtMeshEditor<br>
+    The first visit downloads the engine (about @WASM_MB@ MB) and the models; later visits load from cache.</div>
+</div>
+<div id="screen"></div>
+<script src="qtloader.js"></script>
+<script src="ironfang.js"></script>
+<script>
+(async function boot() {
+  const loading = document.getElementById('loading');
+  const screen = document.getElementById('screen');
+  const bar = document.getElementById('bar');
+  const status = document.getElementById('status');
+  const WASM_BYTES = @WASM_BYTES@;           // uncompressed size, written at build time
+  const HAS_MANIFEST = @HAS_MANIFEST@;
+  const setProgress = (fraction, text) => { bar.style.width = (Math.max(0, Math.min(1, fraction)) * 100).toFixed(1) + '%'; status.textContent = text; };
+  const mb = b => (b / 1048576).toFixed(1);
+
+  // Phase 1 - engine download with real progress: fetch the wasm ourselves, then hand the
+  // compiled module to Qt's loader (config.qt.module).
+  async function fetchWasmWithProgress(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+    if (!res.body) return WebAssembly.compile(await res.arrayBuffer());
+    const reader = res.body.getReader();
+    const chunks = []; let received = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value); received += value.length;
+      setProgress(0.7 * received / WASM_BYTES, `Downloading engine  ${mb(received)} / ${mb(WASM_BYTES)} MB`);
+    }
+    const bytes = new Uint8Array(received); let off = 0;
+    for (const c of chunks) { bytes.set(c, off); off += c.length; }
+    setProgress(0.72, 'Compiling engine…');
+    return WebAssembly.compile(bytes);
+  }
+
+  // Phase 2 - asset preload progress (Emscripten run dependencies, one per preloaded file)
+  let depsTotal = 0;
+  const monitorRunDependencies = (left) => {
+    depsTotal = Math.max(depsTotal, left);
+    if (depsTotal > 0) setProgress(0.72 + 0.28 * (1 - left / depsTotal), `Loading models  ${depsTotal - left} / ${depsTotal}`);
+  };
+
+  try {
+    const modulePromise = fetchWasmWithProgress('ironfang.wasm');
+    const instance = await qtLoad({
+      arguments: (new URLSearchParams(location.search).get('args') || '').split(' ').filter(Boolean),
+      noImageDecoding: true,      // preloaded PNGs/WAVs are raw bytes for Qt, not browser images
+      noAudioDecoding: true,
+      monitorRunDependencies,
+      qt: {
+        entryFunction: window.ironfang_entry,
+        containerElements: [screen],
+        module: modulePromise,
+        preload: HAS_MANIFEST ? ['ironfang-assets.json'] : [],
+        onLoaded: () => {
+          setProgress(1, 'Starting…');
+          screen.style.display = 'block';
+          // the first frames render behind the overlay; then fade it out
+          setTimeout(() => { loading.classList.add('hidden'); setTimeout(() => loading.remove(), 700); }, 400);
+        },
+        onExit: (exitData) => {
+          loading.classList.remove('hidden');
+          status.innerHTML = '<span class="error">The game stopped' + (exitData.code !== undefined ? ` (code ${exitData.code})` : '') + (exitData.text ? `: ${exitData.text}` : '') + '</span>';
+        },
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    status.innerHTML = '<span class="error">Failed to start: ' + (e && e.message ? e.message : e) + '</span>';
+    if (!window.crossOriginIsolated)
+      status.innerHTML += '<br>This page needs cross-origin isolation (SharedArrayBuffer). Reload once; if it persists, the host must send COOP/COEP headers.';
+  }
+})();
+</script>
+</body>
+</html>
