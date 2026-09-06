@@ -50,7 +50,11 @@ cp external/clayground/docs/coi-serviceworker.js "$DEPLOY_DIR/"
 mkdir -p "$DEPLOY_DIR/assets" && cp -R assets/runtime "$DEPLOY_DIR/assets/"
 find "$DEPLOY_DIR/assets" -name .DS_Store -delete
 # web-only: opaque PNG textures -> JPEG (about 6x smaller), QML references rewritten in the copy
-python3 scripts/web-optimize-assets.py "$DEPLOY_DIR/assets"
+if python3 -c "import PIL" 2>/dev/null; then
+  python3 scripts/web-optimize-assets.py "$DEPLOY_DIR/assets"
+else
+  echo "WARNING: Pillow not installed - shipping PNG textures (pip install pillow to shrink the deploy by ~30 MB)"
+fi
 ( cd "$DEPLOY_DIR" && find assets -type f | sort | python3 -c '
 import json, sys
 files = [l.strip() for l in sys.stdin if l.strip()]
