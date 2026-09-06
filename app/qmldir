@@ -8,6 +8,8 @@ BuildingView 1.0 BuildingView.qml
 Projectile 1.0 Projectile.qml
 HealthBar3D 1.0 HealthBar3D.qml
 Hud 1.0 Hud.qml
-MenuOverlay 1.0 MenuOverlay.qml
+Frontend 1.0 Frontend.qml
+Storage 1.0 Storage.qml
+singleton Loc 1.0 Loc.qml
 AudioController 1.0 AudioController.qml
 AssetShowcase 1.0 AssetShowcase.qml

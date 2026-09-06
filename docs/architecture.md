@@ -13,16 +13,34 @@ web-runtime/Main.qml (Item)               Clayground Web Runtime entry (no build
         │    ├── UnitView.qml ×N          workers, warriors, archers, ogres (both teams)
         │    └── Projectile.qml ×N        archer arrows
         ├── Hud.qml                       iron, objectives, selection panel, production
-        ├── MenuOverlay.qml               title / pause / victory / defeat, difficulty
+        ├── Frontend.qml                  main menu, campaign map, briefing, results, settings, credits, pause
+        ├── Storage.qml                   save/settings persistence (QtCore Settings or a shell adapter)
         └── PerfHud (Clayground)          render stats (F)
+Loc.qml (singleton)                        localisation: Loc.tr(key, args) over i18n/<lang>.js
 scripts/                                   rules, pure JS (.pragma library), unit-tested
    NavGrid.js  Steering.js  Economy.js  Production.js  Combat.js  Gather.js  EnemyAI.js
    Mission.js  Objectives.js  Triggers.js  (mission foundation, docs/mission-format.md)
+   Save.js  Campaign.js                    save documents + campaign progression (docs/save-format.md)
 config/                                    data
    balance.js  assets.js
 missions/                                  declarative mission definitions
+   campaign.js                             ordered campaign list, scenarios, unlock rules
    classic_siege.js                        the original First Siege match
+i18n/                                      en.js  pt_BR.js
 ```
+
+## Frontend, campaign and saves
+
+`Frontend.qml` owns every screen outside the match (`screen`: menu, campaign, briefing, results,
+settings, credits, paused). It only renders the `progress` and `settings` documents and emits
+requests; `IronfangGame` acts: `startMission(id, difficulty)` looks the definition up in
+`missions/campaign.js`, `endMatch` builds the result record, `Campaign.recordResult` updates
+completion/bests/unlocks, `saveProgress()` persists through `Storage`. Settings changes go
+through `applySettings()` (language, volumes) and `saveSettings()`.
+
+Difficulty is `story | warrior | warchief` (`Balance.difficulty`): enemy income, wave growth and
+interval, first-wave delay, player start iron, enemy hp/damage, medal time targets. Missions may
+override any value (`docs/mission-format.md`).
 
 ## Missions, objectives, triggers
 

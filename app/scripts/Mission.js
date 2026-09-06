@@ -99,18 +99,22 @@ function validate(def) {
 function load(def, difficultyName) {
     var errors = validate(def)
     if (errors.length) throw new Error("mission '" + (def && def.id) + "': " + errors.join("; "))
-    var diffName = difficultyName || "normal"
+    var diffName = Balance.difficulty[difficultyName] ? difficultyName : Balance.defaultDifficulty
     var m = clone(def)
     var over = def.difficulty && def.difficulty[diffName]
+    // campaign-wide start-iron scale applies unless the mission overrides player.iron for this difficulty
+    var ironOverridden = !!(over && over.player && over.player.iron !== undefined)
     if (over) m = merge(m, over)
     delete m.difficulty
     m.difficultyName = diffName
+    m.difficultyValues = clone(Balance.difficultyFor(diffName))
+    if (!ironOverridden && m.player && m.player.iron !== undefined) m.player.iron = Math.round(m.player.iron * m.difficultyValues.startIronScale)
     m.format = m.format || FORMAT
     m.kind = m.kind || "scenario"
     m.title = m.title || m.id
     m.description = m.description || ""
     m.map.camera = merge({ x: m.map.size / 2, z: m.map.size / 2, yaw: 0, pitch: 52, distance: 42 }, m.map.camera || {})
-    m.player = merge({ iron: Balance.match.startIron }, m.player || {})
+    m.player = merge({ iron: Math.round(Balance.match.startIron * m.difficultyValues.startIronScale) }, m.player || {})
     if (m.enemy) m.enemy = merge({ producer: null, target: null, waves: {} }, m.enemy)
     else m.enemy = null
     m.objectives = (m.objectives || []).map(function(o) {
@@ -120,6 +124,9 @@ function load(def, difficultyName) {
         return merge({ id: "trigger_" + i, repeat: false, actions: [] }, t)
     })
     m.outcome = merge({ victory: "Victory.", defeat: "Defeat." }, m.outcome || {})
+    // medals: iron = completed; steel/gold = published criteria (docs/story-and-campaign.md)
+    m.medals = merge({ steel: { optionalAll: true }, gold: { optionalAll: true, time: 0 } }, m.medals || {})
+    m.briefing = merge({ intro: "", outro: "", illustration: "" }, m.briefing || {})
     m.victory = merge({ auto: true }, m.victory || {})       // auto: all primary objectives -> victory
     m.tags = {}
     m.entities = m.entities.map(function(e) {

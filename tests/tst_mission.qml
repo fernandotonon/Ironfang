@@ -15,8 +15,8 @@ TestCase {
     // ---- loader ---------------------------------------------------------------------------------
     function test_classic_siege_loads_like_the_mvp_level() {
         compare(Mission.validate(ClassicSiege.mission), [])
-        const m = Mission.load(ClassicSiege.mission, "normal")
-        compare(m.id, "classic_siege"); compare(m.difficultyName, "normal")
+        const m = Mission.load(ClassicSiege.mission, "warrior")
+        compare(m.id, "classic_siege"); compare(m.difficultyName, "warrior")
         compare(m.map.size, 64); compare(m.map.camera.x, 18); compare(m.map.camera.pitch, 52)
         compare(m.player.iron, 150)
         // the MVP had 3 + 16 buildings/props (2 player, 1 enemy, 5 deposits, 11 obstacles) and 4 + 3 units
@@ -40,7 +40,7 @@ TestCase {
 
     function test_loader_does_not_mutate_the_definition() {
         const before = JSON.stringify(ClassicSiege.mission)
-        Mission.load(ClassicSiege.mission, "hard")
+        Mission.load(ClassicSiege.mission, "warchief")
         compare(JSON.stringify(ClassicSiege.mission), before)
     }
 
@@ -64,7 +64,7 @@ TestCase {
         has("no actions"); has("endMission.result"); has("enemy.producer tag 'ghost' not found")
         compare(Mission.validate(null).length, 1)
         let threw = false
-        try { Mission.load(bad, "normal") } catch (err) { threw = true; verify(String(err).indexOf("mission ''") >= 0) }
+        try { Mission.load(bad, "warrior") } catch (err) { threw = true; verify(String(err).indexOf("mission ''") >= 0) }
         verify(threw, "load throws on an invalid definition")
     }
 
@@ -73,16 +73,19 @@ TestCase {
             id: "d", map: { size: 20 }, player: { iron: 100 },
             enemy: { producer: "ef", target: "pf", waves: { waveBaseSize: 3, firstWaveDelay: 100 } },
             entities: [ { tag: "pf", type: "clan_fortress", team: "player", x: 5, z: 5 }, { tag: "ef", type: "enemy_fortress", team: "enemy", x: 15, z: 15 } ],
-            difficulty: { easy: { player: { iron: 300 }, enemy: { waves: { firstWaveDelay: 200 } } },
-                          hard: { player: { iron: 60 } } }
+            difficulty: { story: { player: { iron: 300 }, enemy: { waves: { firstWaveDelay: 200 } } },
+                          warchief: { player: { iron: 60 } } }
         }
-        const easy = Mission.load(def, "easy"), hard = Mission.load(def, "hard"), normal = Mission.load(def, "normal")
-        compare(easy.player.iron, 300); compare(hard.player.iron, 60); compare(normal.player.iron, 100)
+        const easy = Mission.load(def, "story"), hard = Mission.load(def, "warchief"), normal = Mission.load(def, "warrior")
+        compare(easy.player.iron, 300, "explicit per-difficulty iron wins over the scale"); compare(hard.player.iron, 60); compare(normal.player.iron, 100)
+        compare(Mission.load({ id: "s", map: { size: 8 }, player: { iron: 100 }, entities: [ { type: "orc_warrior", x: 1, z: 1 } ] }, "story").player.iron,
+                Math.round(100 * Balance.difficulty.story.startIronScale), "campaign-wide start-iron scale")
+        compare(Mission.load(def, "nonsense").difficultyName, Balance.defaultDifficulty)
         compare(easy.enemy.waves.firstWaveDelay, 200); compare(easy.enemy.waves.waveBaseSize, 3, "sibling keys survive the merge")
         compare(hard.enemy.waves.firstWaveDelay, 100)
         compare(Mission.enemyConfig(easy).firstWaveDelay, 200)
         compare(Mission.enemyConfig(easy).waveMaxSize, Balance.enemy.waveMaxSize, "unset fields fall back to Balance.enemy")
-        const noEnemy = Mission.load({ id: "n", map: { size: 8 }, entities: [ { type: "orc_warrior", x: 1, z: 1 } ] }, "normal")
+        const noEnemy = Mission.load({ id: "n", map: { size: 8 }, entities: [ { type: "orc_warrior", x: 1, z: 1 } ] }, "warrior")
         compare(noEnemy.enemy, null); compare(Mission.enemyConfig(noEnemy), null)
         compare(noEnemy.player.iron, Balance.match.startIron)
     }
@@ -215,7 +218,7 @@ TestCase {
 
     // ---- end-to-end: Classic Siege victory / defeat / restart through the real definition --------
     function siegeHarness() {
-        const m = Mission.load(ClassicSiege.mission, "normal")
+        const m = Mission.load(ClassicSiege.mission, "warrior")
         const o = Objectives.create(m.objectives)
         const t = Triggers.create(m.triggers)
         const h = { result: "", messages: [], sounds: [], phase: "playing", o: o, t: t, m: m }
@@ -240,7 +243,7 @@ TestCase {
     function test_classic_siege_victory_flow() {
         const h = siegeHarness()
         h.event("missionStarted", { id: "classic_siege" })
-        compare(h.messages, ["Send your goblins to the iron. Forge an army. Break the enemy fortress."])
+        compare(h.messages, ["classic_siege.intro"], "mission texts are localisation keys")
         h.event("waveLaunched", { size: 3 }); h.event("waveLaunched", { size: 4 })
         compare(h.messages.length, 3); compare(h.sounds, ["wave_incoming", "wave_incoming"], "the wave warning repeats")
         h.event("entityDestroyed", { tag: "", entityType: "orc_warrior", team: "enemy" })

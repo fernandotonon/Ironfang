@@ -16,9 +16,12 @@ then played by a game built on [Clayground](https://github.com/MisterGC/claygrou
 > **In progress — Ironfang: The Broken Crown**, the commercial expansion (seven-mission campaign,
 > Survival, achievements, QtMesh Games integration). Scope: [`docs/product-scope.md`](docs/product-scope.md),
 > story: [`docs/story-and-campaign.md`](docs/story-and-campaign.md), plan and milestone log:
-> [`docs/broken-crown-plan.md`](docs/broken-crown-plan.md). Milestone 1 (mission foundation) is
-> done: the match is a data-driven mission ([`docs/mission-format.md`](docs/mission-format.md)),
-> the original level lives on as `app/missions/classic_siege.js`.
+> [`docs/broken-crown-plan.md`](docs/broken-crown-plan.md). Done so far: M1 mission foundation
+> ([`docs/mission-format.md`](docs/mission-format.md); the original level is `app/missions/classic_siege.js`)
+> and M2 campaign shell (main menu, campaign map, briefing, results, saves
+> [`docs/save-format.md`](docs/save-format.md), Story/Warrior/Warchief, English + Brazilian
+> Portuguese [`docs/localization.md`](docs/localization.md)). Missing art is tracked in
+> [`docs/asset-requests.md`](docs/asset-requests.md).
 
 **The match:** select goblin workers and send them to an iron deposit; spend iron at the Clan
 Fortress (workers) and the War Foundry (warriors, archers, an ogre); hold off the enemy waves;

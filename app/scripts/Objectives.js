@@ -113,12 +113,14 @@ function anyPrimaryFailed(s) {
 }
 
 // Text for the HUD's primary line, e.g. "Destroy the Enemy Fortress (2500 HP)".
-function primaryText(s) {
+// `translate` (optional) maps the objective text key to the player's language.
+function primaryText(s, translate) {
     var o = activePrimary(s)
     if (!o) return ""
-    if (o.progress && o.progress.type === "entityHp" && o.target > 0) return o.text + " (" + o.current + " HP)"
-    if (o.target > 0) return o.text + " (" + o.current + "/" + o.target + ")"
-    return o.text
+    var text = translate ? translate(o.text) : o.text
+    if (o.progress && o.progress.type === "entityHp" && o.target > 0) return text + " (" + o.current + " HP)"
+    if (o.target > 0) return text + " (" + o.current + "/" + o.target + ")"
+    return text
 }
 
 function drain(s) { var ev = s.events; s.events = []; return ev }

@@ -17,6 +17,16 @@ is called done. Items marked *(M1+)* are not exercised by the Milestone 0 spike 
 - [ ] Play Again / Restart rebuilds the same mission: 19 buildings, 7 units, 150 iron, intro message again, objective open again.
 - [ ] Easy / Normal / Hard still change wave growth and interval (enemy income), nothing else.
 
+## Campaign shell (Milestone 2)
+- [ ] Main menu shows Campaign, Survival (locked with the Mission 3 explanation), Skirmish (Classic Siege), Codex (later build), Asset Showcase, Settings, Credits; Exit only on desktop. Continue appears once a mission has been played.
+- [ ] Campaign map lists 7 missions; only Mission 1 is open, later ones say which mission unlocks them; unauthored missions say "in development".
+- [ ] Briefing shows title, placeholder illustration, description, objectives (optional marked), medal criteria that change with the difficulty, three difficulty buttons, best result if any; Begin Mission starts the match.
+- [ ] Results screen after victory/defeat: medal, time, iron, produced/lost/defeated, buildings, optional, previous best, unlocks; Replay restarts, Campaign Map / Main Menu returns.
+- [ ] Quit the app and relaunch: the medal and best time are still there (desktop: QSettings; browser: reload the page).
+- [ ] Settings: switching to Português relabels every screen immediately; volume sliders change the desktop audio; both survive a relaunch; Reset Progress asks for confirmation and keeps settings.
+- [ ] Pause menu: Resume, Restart Mission, Settings (and back to the pause menu), Quit to Menu (returns to the campaign map for campaign missions, otherwise the main menu).
+- [ ] Story / Warrior / Warchief: start iron 240 / 150 / 105 in Classic Siege; enemy units hit softer/harder.
+
 ## Camera
 - [ ] W/A/S/D and arrow keys pan; speed feels constant when zoomed in vs out.
 - [ ] Mouse wheel zooms toward the cursor; cannot pass through the ground; zoom-out stops at the map scale.

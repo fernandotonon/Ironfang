@@ -168,3 +168,26 @@ compare with the previous milestone → fix regressions → report → separate 
 * Known limitations: `revealArea`, `unlockAbility`, `activateCheckpoint` are accepted no-ops
   until M4/M5; `showDialogue` is a HUD flash until the campaign shell; difficulty names remain
   easy/normal/hard until M2; texts are still literal English (localisation keys in M2).
+
+### M2 — Campaign shell (2026-09-06)
+
+* `Frontend.qml` replaces `MenuOverlay.qml`: main menu (Continue, Campaign, Survival locked with
+  its unlock rule, Skirmish, Codex placeholder, Showcase, Settings, Credits, Exit on desktop),
+  campaign map (list form; illustrated map pending art), briefing (placeholder illustration,
+  description, objectives, published medal criteria per difficulty, difficulty picker, best),
+  results (medal, counters, previous best, unlocks), settings (language, volumes, camera shake,
+  high-contrast toggle), credits, pause.
+* `scripts/Save.js` + `Storage.qml`: two versioned JSON documents (`progress`, `settings`) over
+  QtCore Settings (desktop QSettings / browser localStorage) or a shell-supplied adapter;
+  tolerant parsing, migrations, reset. `scripts/Campaign.js` + `missions/campaign.js`: the
+  7-mission list, unlock chain, Survival unlock after Mission 3, medals (iron/steel/gold from
+  published criteria, difficulty `timerScale`), best per mission × difficulty.
+* Difficulty renamed Story / Warrior / Warchief with start-iron, first-wave, enemy hp/damage and
+  timer scales in `balance.js`; enemy units are scaled at spawn.
+* Localisation: `Loc` singleton, `i18n/en.js` + `i18n/pt_BR.js` (145 keys), all menu/HUD/mission
+  texts keyed, `scripts/check-i18n.py` as ctest `IronfangLocalization`.
+* Tests: `tests/tst_save.qml` (7 cases: round trip, corrupt/partial/newer saves, migration,
+  unlock order, medals, record/best/reset). 24/24 ctest entries green.
+* Placeholders documented in `docs/asset-requests.md` (illustrations, portraits, new models).
+* Limitations: Survival/Codex are visible but disabled with an explanation; campaign missions
+  are listed but unauthored until M3; flash messages inside the controller stay English until M7.

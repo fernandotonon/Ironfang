@@ -9,11 +9,11 @@
 .import "../config/balance.js" as Balance
 
 function create(cfg, difficultyName) {
-    var d = Balance.difficulty[difficultyName || "normal"] || Balance.difficulty.normal
+    var d = Balance.difficultyFor(difficultyName)
     return {
         economy: Economy.create(cfg.startIron),
         incomePerSecond: cfg.passiveIncomePerSecond * d.incomeScale,
-        nextWaveAt: cfg.firstWaveDelay,
+        nextWaveAt: cfg.firstWaveDelay * (d.firstWaveDelayScale || 1),
         waveInterval: d.waveInterval,
         waveGrowth: d.waveGrowth,
         wavesLaunched: 0,

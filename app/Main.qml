@@ -9,7 +9,7 @@ Window {
     height: 800
     visible: true
     color: "#14161a"
-    title: "Ironfang: First Siege"
+    title: "Ironfang: The Broken Crown"
 
     // Clayground convention: every clay_app is a headless ctest smoke test (QT_QPA_PLATFORM=minimal);
     // loading without warnings is the pass criterion, so quit right after the scene is up.

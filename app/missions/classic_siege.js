@@ -9,8 +9,8 @@ var mission = {
     id: "classic_siege",
     format: 1,
     kind: "scenario",                        // campaign | scenario | survival
-    title: "Classic Siege",
-    description: "Send your goblins to the iron. Forge an army. Break the enemy fortress.",
+    title: "scenario.classic_siege.title",
+    description: "scenario.classic_siege.tagline",
 
     map: {
         size: 64,
@@ -51,25 +51,25 @@ var mission = {
     ],
 
     objectives: [
-        { id: "destroy_fortress", text: "Destroy the Enemy Fortress", primary: true,
+        { id: "destroy_fortress", text: "classic_siege.objective.destroy", primary: true,
           progress: { type: "entityHp", tag: "enemy_fortress" } }
     ],
 
     // Victory: every primary objective complete (default). Defeat: declared by a trigger.
     triggers: [
         { id: "intro", when: { type: "missionStarted" },
-          actions: [ { type: "message", text: "Send your goblins to the iron. Forge an army. Break the enemy fortress." } ] },
+          actions: [ { type: "message", text: "classic_siege.intro" } ] },
         { id: "fortress_down", when: { type: "entityDestroyed", tag: "enemy_fortress" },
           actions: [ { type: "completeObjective", id: "destroy_fortress" } ] },
         { id: "home_lost", when: { type: "entityDestroyed", tag: "player_fortress" },
           actions: [ { type: "endMission", result: "defeat" } ] },
         { id: "wave_warning", when: { type: "waveLaunched" }, repeat: true,
-          actions: [ { type: "message", text: "An enemy war party is marching on your fortress!" },
+          actions: [ { type: "message", text: "classic_siege.wave_warning" },
                      { type: "playAudio", sound: "wave_incoming" } ] }
     ],
 
     outcome: {
-        victory: "The enemy fortress lies in ruins. Ironfang stands.",
-        defeat: "The Clan Fortress has fallen."
+        victory: "classic_siege.victory",
+        defeat: "classic_siege.defeat"
     }
 }

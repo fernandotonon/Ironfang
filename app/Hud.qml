@@ -13,6 +13,7 @@ Item {
     property bool showFps: false
     property int enemyWave: 0
     property real matchTime: 0
+    property string title: ""
 
     signal produceRequested(var building, string typeId)
     signal cancelProductionRequested(var building)
@@ -69,20 +70,20 @@ Item {
             Row {
                 spacing: 6
                 Rectangle { width: 14; height: 14; radius: 3; color: "#8d8f96"; anchors.verticalCenter: parent.verticalCenter; border.color: "#c8cbd2" }
-                Text { text: "Iron  " + Math.floor(hud.iron); color: hud.ink; font.pixelSize: 16; font.bold: true }
+                Text { text: Loc.tr("hud.iron", { n: Math.floor(hud.iron) }); color: hud.ink; font.pixelSize: 16; font.bold: true }
             }
             Text { text: hud.objective; color: hud.gold; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter }
-            Text { text: hud.fmtTime(hud.matchTime) + (hud.enemyWave ? "   wave " + hud.enemyWave : ""); color: hud.faint; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: hud.fmtTime(hud.matchTime) + (hud.enemyWave ? "   " + Loc.tr("hud.wave", { n: hud.enemyWave }) : ""); color: hud.faint; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
             Text { visible: hud.showFps; text: "FPS " + hud.fps.toFixed(0); color: hud.faint; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
         }
         Text {
             anchors { centerIn: parent }
-            text: "IRONFANG: FIRST SIEGE"; color: hud.gold; font.pixelSize: 14; font.bold: true; font.letterSpacing: 3
+            text: hud.title.toUpperCase(); color: hud.gold; font.pixelSize: 14; font.bold: true; font.letterSpacing: 3
         }
         Row {
             anchors { right: parent.right; verticalCenter: parent.verticalCenter; rightMargin: 12 }
             spacing: 8
-            HudButton { label: "Pause (P)"; onClicked: hud.pauseRequested() }
+            HudButton { label: Loc.tr("hud.pause"); onClicked: hud.pauseRequested() }
         }
     }
 
@@ -111,7 +112,7 @@ Item {
                     style: Text.Outline; styleColor: "#000000"
                 }
                 Text {
-                    text: (modelData.optional ? "Optional: " : "") + modelData.text
+                    text: (modelData.optional ? Loc.tr("objective.optional_prefix") + " " : "") + Loc.trOr(modelData.text)
                           + (modelData.showCount ? "  " + modelData.current + " / " + modelData.target : "")
                     color: modelData.state === "active" ? (modelData.optional ? hud.faint : hud.ink) : "#8b9096"
                     font.pixelSize: 12
@@ -146,13 +147,13 @@ Item {
                 spacing: 4
                 Text {
                     text: hud.selection.length > 1
-                          ? hud.selection.length + " units selected"
-                          : (hud.primary && hud.primary.typeDef ? hud.primary.typeDef.displayName : "")
+                          ? Loc.tr("hud.units_selected", { n: hud.selection.length })
+                          : (hud.primary ? hud.game.entityName(hud.primary) : "")
                     color: hud.ink; font.pixelSize: 15; font.bold: true
                 }
                 Text {
                     visible: hud.selection.length === 1 && hud.primary && hud.primary.maxHp > 0
-                    text: hud.primary ? "HP " + Math.ceil(hud.primary.hp) + " / " + hud.primary.maxHp : ""
+                    text: hud.primary ? Loc.tr("hud.hp", { hp: Math.ceil(hud.primary.hp), max: hud.primary.maxHp }) : ""
                     color: hud.ink; font.pixelSize: 12
                 }
                 Rectangle {
@@ -169,14 +170,15 @@ Item {
                         const p = hud.primary
                         if (!p) return ""
                         if (p.isBuilding) {
-                            if (p.stats && p.stats.resource) return "Iron left: " + Math.floor(p.iron)
+                            if (p.stats && p.stats.resource) return Loc.tr("hud.iron_left", { n: Math.floor(p.iron) })
                             void hud.game.tick; void p.rallyRev
-                            const rally = p.rallyTarget ? "Rally: gather at the iron deposit" : (p.rally ? "Rally: point set" : "Rally: none (right-click to set)")
-                            if (p.queue && p.queue.items.length) return "Producing: " + p.queue.items.map(t => hud.game.unitName(t)).join(", ") + "\n" + rally
-                            return p.team === "enemy" ? "Hostile structure" : (p.team === "player" && p.queue ? "Idle · " + rally : "Idle")
+                            const rally = p.rallyTarget ? Loc.tr("hud.rally_deposit") : (p.rally ? Loc.tr("hud.rally_point") : Loc.tr("hud.rally_none"))
+                            if (p.queue && p.queue.items.length) return Loc.tr("hud.producing", { list: p.queue.items.map(t => hud.game.unitName(t)).join(", ") }) + "\n" + rally
+                            if (p.productionEnabled === false) return Loc.tr("hud.not_operational")
+                            return p.team === "enemy" ? Loc.tr("hud.hostile_structure") : (p.team === "player" && p.queue ? Loc.tr("hud.idle") + " · " + rally : Loc.tr("hud.idle"))
                         }
-                        if (p.typeId === "goblin_worker") return p.gatherState !== "idle" ? "Gathering  (carrying " + p.carried + ")" : (p.carried ? "Carrying " + p.carried + " iron" : "Idle")
-                        return p.order === "attack" ? "Attacking" : (p.path && p.path.length ? "Moving" : "Idle")
+                        if (p.typeId === "goblin_worker") return p.gatherState !== "idle" ? Loc.tr("hud.gathering", { n: p.carried }) : (p.carried ? Loc.tr("hud.carrying", { n: p.carried }) : Loc.tr("hud.idle"))
+                        return p.order === "attack" ? Loc.tr("hud.attacking") : (p.path && p.path.length ? Loc.tr("hud.moving") : Loc.tr("hud.idle"))
                     }
                     color: hud.faint; font.pixelSize: 12
                 }
@@ -196,7 +198,7 @@ Item {
             anchors { fill: parent; margins: 10 }
             spacing: 6
             Text {
-                text: hud.buildingSelected ? "Produce" : "Orders"
+                text: hud.buildingSelected ? Loc.tr("hud.produce") : Loc.tr("hud.orders")
                 color: hud.gold; font.pixelSize: 12; font.bold: true
             }
             Flow {
@@ -206,13 +208,13 @@ Item {
                     HudButton {
                         required property string modelData
                         label: hud.game ? hud.game.unitName(modelData) : modelData
-                        sub: hud.game ? hud.game.unitCost(modelData) + " iron · " + hud.game.unitBuildTime(modelData) + "s" : ""
+                        sub: hud.game ? Loc.tr("hud.cost", { iron: hud.game.unitCost(modelData), s: hud.game.unitBuildTime(modelData) }) : ""
                         usable: hud.game ? hud.iron >= hud.game.unitCost(modelData) && hud.primary.productionEnabled !== false : false
                         onClicked: hud.produceRequested(hud.primary, modelData)
                     }
                 }
-                HudButton { visible: hud.workersSelected > 0 && !hud.buildingSelected; label: "Return iron"; onClicked: hud.returnIronRequested() }
-                HudButton { visible: hud.workersSelected > 0 && !hud.buildingSelected; label: "Stop (S)"; onClicked: hud.stopRequested() }
+                HudButton { visible: hud.workersSelected > 0 && !hud.buildingSelected; label: Loc.tr("hud.return_iron"); onClicked: hud.returnIronRequested() }
+                HudButton { visible: hud.workersSelected > 0 && !hud.buildingSelected; label: Loc.tr("hud.stop"); onClicked: hud.stopRequested() }
             }
             // production progress
             Row {
@@ -226,10 +228,10 @@ Item {
                     }
                 }
                 Text {
-                    text: hud.primary && hud.primary.queue ? hud.primary.queue.items.length + " queued" : ""
+                    text: hud.primary && hud.primary.queue ? Loc.tr("hud.queued", { n: hud.primary.queue.items.length }) : ""
                     color: hud.faint; font.pixelSize: 11; anchors.verticalCenter: parent.verticalCenter
                 }
-                HudButton { label: "Cancel"; height: 22; width: 60; onClicked: hud.cancelProductionRequested(hud.primary) }
+                HudButton { label: Loc.tr("common.cancel"); height: 22; width: 60; onClicked: hud.cancelProductionRequested(hud.primary) }
             }
         }
     }
@@ -237,7 +239,7 @@ Item {
     Text {
         visible: !hud.touchMode
         anchors { right: parent.right; top: parent.top; topMargin: 46; rightMargin: 12 }
-        text: "LMB select · drag box · Shift add · RMB order · building selected + RMB = rally point (deposit = auto-gather) · WASD/wheel camera · Esc clear"
+        text: Loc.tr("hud.hint_mouse")
         color: "#6f7580"; font.pixelSize: 10
     }
 
@@ -260,16 +262,15 @@ Item {
             }
             MouseArea { id: ma; anchors.fill: parent; onClicked: tb.clicked() }
         }
-        TouchButton { icon: "⚔"; label: "Army"; onClicked: hud.selectArmyRequested() }
-        TouchButton { icon: "⛏"; label: "Workers"; onClicked: hud.selectWorkersRequested() }
-        TouchButton { icon: "✕"; label: "Deselect"; onClicked: hud.deselectRequested() }
-        TouchButton { icon: "⌂"; label: "Home"; onClicked: hud.homeRequested() }
+        TouchButton { icon: "⚔"; label: Loc.tr("hud.touch_army"); onClicked: hud.selectArmyRequested() }
+        TouchButton { icon: "⛏"; label: Loc.tr("hud.touch_workers"); onClicked: hud.selectWorkersRequested() }
+        TouchButton { icon: "✕"; label: Loc.tr("hud.touch_deselect"); onClicked: hud.deselectRequested() }
+        TouchButton { icon: "⌂"; label: Loc.tr("hud.touch_home"); onClicked: hud.homeRequested() }
     }
     Text {
         visible: hud.touchMode
         anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 6 }
-        text: hud.selection.length ? "tap ground / enemy / iron to order · tap your unit to select it · drag to box-select · two fingers: pan & zoom"
-                                   : "tap a unit or building to select · drag to box-select · two fingers: pan & zoom"
+        text: hud.selection.length ? Loc.tr("hud.hint_touch_selected") : Loc.tr("hud.hint_touch")
         color: "#8b9096"; font.pixelSize: 11
     }
 }

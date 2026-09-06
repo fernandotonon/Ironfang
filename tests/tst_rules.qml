@@ -146,7 +146,7 @@ TestCase {
     // ---- enemy AI -----------------------------------------------------------------------------
     function test_enemy_ai_produces_and_launches_waves() {
         const cfg = Balance.enemy
-        const ai = EnemyAI.create(cfg, "normal")
+        const ai = EnemyAI.create(cfg, "warrior")
         const produced = [], waves = []
         let time = 0, idle = [], queueBusy = false
         const world = {
@@ -174,9 +174,11 @@ TestCase {
     }
 
     function test_enemy_ai_difficulty_scaling() {
-        const easy = EnemyAI.create(Balance.enemy, "easy"), hard = EnemyAI.create(Balance.enemy, "hard")
+        const easy = EnemyAI.create(Balance.enemy, "story"), hard = EnemyAI.create(Balance.enemy, "warchief")
         verify(easy.incomePerSecond < hard.incomePerSecond)
         verify(easy.waveInterval > hard.waveInterval)
+        verify(easy.nextWaveAt > hard.nextWaveAt, "Story delays the first wave, Warchief hurries it")
+        compare(EnemyAI.create(Balance.enemy, "bogus").incomePerSecond, EnemyAI.create(Balance.enemy, "warrior").incomePerSecond, "unknown names fall back to Warrior")
     }
 
     // ---- touch smart tap --------------------------------------------------------------------------

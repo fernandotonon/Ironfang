@@ -2,7 +2,7 @@
 // and when loaded by the Clayground Web Runtime from static files).
 // Composition: GameWorld (3D scene) + entities (UnitView/BuildingView/Projectile, created
 // imperatively) + JS rule modules (Economy, Production, Combat, Gather, EnemyAI, NavGrid,
-// Steering) + Hud + MenuOverlay. A fixed 30 Hz simulation step drives all rules; rendering is
+// Steering) + Hud + Frontend (menus, briefing, results). A fixed 30 Hz simulation step drives all rules; rendering is
 // frame-driven.
 import QtQuick
 import QtQuick3D
@@ -22,6 +22,8 @@ import "scripts/Mission.js" as Mission
 import "scripts/Objectives.js" as Objectives
 import "scripts/Triggers.js" as Triggers
 import "missions/classic_siege.js" as ClassicSiege
+import "scripts/Save.js" as Save
+import "scripts/Campaign.js" as Campaign
 
 Item {
     id: game
@@ -37,12 +39,13 @@ Item {
     // in-memory filesystem under /game/ (own build: Qt loader `preload`; Clayground Web Runtime:
     // its app shell + assets-manifest.json).
     property string assetBase: Qt.platform.os === "wasm" ? "file:///game/" : ""
-    property string difficulty: "normal"
+    property string difficulty: Balance.defaultDifficulty
 
     // ---- mission ---------------------------------------------------------------------------
     // The match is built from a declarative mission definition (docs/mission-format.md).
     // Objectives and triggers drive victory/defeat and the HUD; the controller only feeds events.
     property var missionDef: ClassicSiege.mission     // definition to load (title screen default)
+    property string currentMissionId: "classic_siege" // campaign/scenario id of the running match
     property var mission: null                        // Mission.load() result of the running match
     property var objectives: null                     // Objectives.create() state
     property var triggers: null                       // Triggers.create() state
@@ -74,10 +77,54 @@ Item {
     property int buildingsLost: 0
     property int buildingsDestroyed: 0
 
+    // ---- persistence (docs/save-format.md) ----------------------------------------------------
+    property var progress: Save.emptyProgress()
+    property var settings: Save.emptySettings()
+    property var lastResult: null
+    Storage { id: storage }
+    function loadSaves() {
+        const p = Save.parse(storage.read("progress"), "progress")
+        if (!p.ok) console.warn("progress save unreadable (" + p.error + "), starting fresh")
+        progress = p.data
+        console.log("save: progress " + (p.empty ? "empty (new player)" : "loaded, last mission " + p.data.campaign.lastMission) + (storage.usingAdapter ? " via shell adapter" : ""))
+        const st = Save.parse(storage.read("settings"), "settings")
+        if (!st.ok) console.warn("settings unreadable (" + st.error + "), using defaults")
+        settings = st.data
+        if (p.migrated) saveProgress()
+        if (st.migrated) saveSettings()
+        frontend.progressRev++
+    }
+    function saveProgress() { if (!storage.write("progress", Save.serialize(progress))) console.warn("saving progress failed:", storage.lastError); frontend.progressRev++ }
+    function saveSettings() { if (!storage.write("settings", Save.serialize(settings))) console.warn("saving settings failed:", storage.lastError) }
+    function applySettings() {
+        if (settings.language && Loc.tables[settings.language]) Loc.setLanguage(settings.language)
+        else if (Qt.locale().name.indexOf("pt") === 0) Loc.setLanguage("pt_BR")
+        const a = settings.audio
+        audio.sfxVolume = a.master * a.effects
+        audio.musicVolume = a.master * a.music
+        audio.soundOn = audio.platformSupported && a.master > 0 && Qt.application.arguments.indexOf("--mute") < 0 && !autotest
+    }
+    function resetProgress() { Campaign.resetProgress(progress); saveProgress() }
+
     // ---- startup ---------------------------------------------------------------------------
     Component.onCompleted: {
-        if (autotest) startMatch("normal")
+        loadSaves()
+        applySettings()
+        if (autotest) startMission("classic_siege", Balance.defaultDifficulty)
         else if (Qt.application.arguments.indexOf("--showcase") >= 0) phase = "showcase"
+    }
+
+    // ---- campaign flow -------------------------------------------------------------------------
+    function startMission(id, diff) {
+        const info = Campaign.info(id)
+        if (!info || !info.definition) { console.warn("mission not available:", id); return }
+        currentMissionId = id
+        startMatch(diff, info.definition)
+    }
+    function quitToMenu() {
+        clearWorld()
+        phase = "title"
+        frontend.screen = Campaign.isCampaignMission(currentMissionId) ? "campaign" : "menu"
     }
     Timer {   // --showcase: screenshot the showcase after the model loaded, then quit (desktop)
         running: Qt.application.arguments.indexOf("--showcase") >= 0 && game.phase === "showcase"
@@ -87,7 +134,7 @@ Item {
     Timer { id: quitTimer; interval: 800; onTriggered: Qt.quit() }
 
     function startMatch(diff, def) {
-        difficulty = diff || "normal"
+        difficulty = diff || Balance.defaultDifficulty
         if (def) missionDef = def
         mission = Mission.load(missionDef, difficulty)
         clearWorld()
@@ -119,6 +166,10 @@ Item {
         if (phase === "paused") audio.pauseMusic()
         else if (phase === "playing") audio.resumeMusic()
         else if (phase !== "victory" && phase !== "defeat") audio.stopMusic()
+        if (phase === "playing" || phase === "showcase") frontend.screen = ""
+        else if (phase === "paused") frontend.screen = "paused"
+        else if (phase === "victory" || phase === "defeat") frontend.screen = "results"
+        else if (phase === "title" && frontend.screen === "") frontend.screen = "menu"
     }
 
     function restartMatch() { startMatch(difficulty) }
@@ -171,12 +222,23 @@ Item {
     function spawnUnit(typeId, team, x, z, def) {
         const u = unitComp.createObject(world.unitRoot, {
             entityId: nextEntityId++, typeId: typeId, team: team, tag: (def && def.tag) || "",
-            typeDef: Assets.unit(typeId), stats: Balance.units[typeId] || {},
+            typeDef: Assets.unit(typeId), stats: unitStatsFor(typeId, team),
             x: x, z: z, heading: team === "enemy" ? 200 : 20
         })
         u.moveRequested.connect(onMoveRequested)
         const list = units.slice(); list.push(u); units = list
         return u
+    }
+
+    // Enemy units carry the difficulty's hp/damage scale (Story softer, Warchief harder).
+    function unitStatsFor(typeId, team) {
+        const base = Balance.units[typeId] || {}
+        if (team !== "enemy" || !mission) return base
+        const d = mission.difficultyValues
+        if (d.enemyHpScale === 1 && d.enemyDamageScale === 1) return base
+        const out = Object.assign({}, base)
+        out.hp = Math.round(base.hp * d.enemyHpScale); out.damage = Math.round(base.damage * d.enemyDamageScale * 10) / 10
+        return out
     }
 
     function spawnBuilding(typeId, team, x, z, def) {
@@ -210,7 +272,12 @@ Item {
     }
 
     // ---- helpers for the HUD ---------------------------------------------------------------
-    function unitName(t) { return Balance.units[t] ? Balance.units[t].name : t }
+    function unitName(t) { return Loc.has("unit." + t) ? Loc.tr("unit." + t) : (Balance.units[t] ? Balance.units[t].name : t) }
+    function entityName(e) {
+        if (!e) return ""
+        const key = (e.isUnit ? "unit." : "building.") + e.typeId
+        return Loc.has(key) ? Loc.tr(key) : (e.typeDef && e.typeDef.displayName) || e.typeId
+    }
     function unitCost(t) { return Balance.units[t] ? Balance.units[t].cost : 0 }
     function unitBuildTime(t) { return Balance.units[t] ? Balance.units[t].buildTime : 0 }
     function queueProgress(b) { void tick; return b && b.queue ? Production.headProgress(b.queue) : 0 }
@@ -495,8 +562,8 @@ Item {
         query: missionQuery,
         objectiveComplete: (id) => { const o = game.objectives && Objectives.get(game.objectives, id); return !!o && o.state === "complete" },
         actions: {
-            message:           (a) => flash(a.text),
-            showDialogue:      (a) => flash((a.speaker ? a.speaker + ": " : "") + a.text),   // dialogue UI arrives with the campaign shell
+            message:           (a) => flash(Loc.trOr(a.text)),
+            showDialogue:      (a) => flash((a.speaker ? Loc.trOr(a.speaker) + ": " : "") + Loc.trOr(a.text)),   // portrait dialogue arrives in M5
             playAudio:         (a) => audio.play(a.sound, a.volume === undefined ? 1 : a.volume),
             completeObjective: (a) => Objectives.complete(objectives, a.id, matchTime),
             failObjective:     (a) => Objectives.fail(objectives, a.id, matchTime),
@@ -542,7 +609,7 @@ Item {
 
     function refreshObjectives() {
         _objRev = objectives.rev
-        objectiveText = Objectives.primaryText(objectives)
+        objectiveText = Objectives.primaryText(objectives, (k) => Loc.trOr(k))
         objectiveRows = Objectives.visible(objectives).map(o => ({ id: o.id, text: o.text, state: o.state, optional: o.optional,
                                                                    current: o.current, target: o.target, showCount: !!(o.target > 0 && !(o.progress && o.progress.type === "entityHp")) }))
     }
@@ -754,9 +821,29 @@ Item {
 
     function endMatch(result) {
         if (phase !== "playing") return
-        phase = result
         setSelection([])
+        const summary = Objectives.summary(objectives)
+        const r = {
+            missionId: currentMissionId, missionTitle: missionTitleText(), campaign: Campaign.isCampaignMission(currentMissionId),
+            victory: result === "victory", time: matchTime, difficulty: difficulty,
+            unitsProduced: unitsProduced, unitsLost: unitsLost, unitsKilled: unitsKilled,
+            buildingsDestroyed: buildingsDestroyed, buildingsLost: buildingsLost, ironGathered: Math.floor(economy.gathered),
+            optionalComplete: summary.optionalComplete, optionalTotal: summary.optionalTotal,
+            outcomeText: result === "victory" ? mission.outcome.victory : mission.outcome.defeat,
+            mission: mission, medal: "", previousBest: null, newlyUnlocked: [], survivalUnlocked: false
+        }
+        const rec = Campaign.recordResult(progress, currentMissionId, difficulty, r)
+        r.medal = rec.medal; r.previousBest = rec.previousBest; r.newlyUnlocked = rec.newlyUnlocked; r.survivalUnlocked = rec.survivalUnlocked
+        delete r.mission
+        lastResult = r
+        saveProgress()
+        gameEvent("missionEnded", { result: result, medal: r.medal })
+        phase = result
         audio.play(result === "victory" ? "victory" : "defeat")
+    }
+    function missionTitleText() {
+        const info = Campaign.info(currentMissionId)
+        return info ? Loc.tr(info.titleKey) : (mission ? Loc.trOr(mission.title) : "")
     }
 
     // ---- 3D scene ----------------------------------------------------------------------------
@@ -780,7 +867,7 @@ Item {
             }
         }
     }
-    AudioController { id: audio; soundOn: platformSupported && Qt.application.arguments.indexOf("--mute") < 0 && !game.autotest }
+    AudioController { id: audio }
     GridPathfinder { id: pathfinder; diagonal: true }
 
     // ---- input -------------------------------------------------------------------------------
@@ -917,6 +1004,7 @@ Item {
         enemyWave: game.enemyAI ? (void game.tick, game.enemyAI.wavesLaunched) : 0
         objective: game.objectiveText
         objectiveRows: game.objectiveRows
+        title: game.missionTitleText()
         onProduceRequested: (b, t) => game.produce(b, t)
         onCancelProductionRequested: (b) => game.cancelProduction(b)
         touchMode: game.touchMode
@@ -929,25 +1017,21 @@ Item {
         onHomeRequested: if (game.playerFortress) world.rig.focusOn(Qt.vector3d(game.playerFortress.x, 0, game.playerFortress.z))
     }
 
-    MenuOverlay {
-        id: menu
+    Frontend {
+        id: frontend
         anchors.fill: parent
-        mode: game.phase === "title" ? "title" : game.phase === "paused" ? "paused"
-            : game.phase === "victory" ? "victory" : game.phase === "defeat" ? "defeat"
-            : game.phase === "credits" ? "credits" : ""
-        subtitle: game.mission && game.phase === "victory" ? game.mission.outcome.victory
-                : game.mission && game.phase === "defeat" ? game.mission.outcome.defeat : ""
-        stats: (game.phase === "victory" || game.phase === "defeat")
-               ? "Match time " + Math.floor(game.matchTime / 60) + ":" + ("0" + Math.floor(game.matchTime % 60)).slice(-2)
-                 + "   ·   iron gathered " + Math.floor(game.economy.gathered)
-                 + "   ·   enemies slain " + game.unitsKilled + "   ·   units lost " + game.unitsLost
-               : ""
-        onStartRequested: (d) => game.startMatch(d)
+        game: game
+        progress: game.progress
+        settings: game.settings
+        lastResult: game.lastResult
+        onStartMissionRequested: (id, diff) => game.startMission(id, diff)
         onResumeRequested: game.phase = "playing"
         onRestartRequested: game.restartMatch()
+        onQuitToMenuRequested: game.quitToMenu()
         onShowcaseRequested: game.phase = "showcase"
-        onCreditsRequested: game.phase = "credits"
-        onBackRequested: game.phase = "title"
+        onExitRequested: Qt.quit()
+        onSettingsEdited: { game.applySettings(); game.saveSettings() }
+        onResetProgressRequested: game.resetProgress()
     }
 
     AssetShowcase {
@@ -956,7 +1040,7 @@ Item {
         assetBase: game.assetBase
         useModels: game.useModels
         focus: visible
-        onCloseRequested: game.phase = "title"
+        onCloseRequested: { game.phase = "title"; frontend.screen = "menu" }
     }
 
     PerfHud {

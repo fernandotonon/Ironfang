@@ -69,11 +69,22 @@ var enemy = {
     rallyOffset: { x: -8, z: 8 }      // where produced units gather relative to the fortress
 }
 
+// Story / Warrior / Warchief (docs/story-and-campaign.md). Mission definitions may override any
+// value per difficulty (docs/mission-format.md); these are the campaign-wide defaults.
+//   incomeScale, waveGrowth, waveInterval  -> EnemyAI.create
+//   startIronScale                         -> Mission.load (player.iron unless the mission overrides)
+//   enemyHpScale, enemyDamageScale         -> applied to enemy units when spawned
+//   firstWaveDelayScale                    -> EnemyAI first wave
+//   timerScale                             -> optional-objective / medal time targets (Campaign.js)
 var difficulty = {
-    easy:   { incomeScale: 0.7, waveGrowth: 0, waveInterval: 110 },
-    normal: { incomeScale: 1.0, waveGrowth: 1, waveInterval: 85 },
-    hard:   { incomeScale: 1.35, waveGrowth: 2, waveInterval: 70 }
+    story:    { incomeScale: 0.7,  waveGrowth: 0, waveInterval: 110, firstWaveDelayScale: 1.4, startIronScale: 1.6, enemyHpScale: 0.8, enemyDamageScale: 0.75, timerScale: 1.5 },
+    warrior:  { incomeScale: 1.0,  waveGrowth: 1, waveInterval: 85,  firstWaveDelayScale: 1.0, startIronScale: 1.0, enemyHpScale: 1.0, enemyDamageScale: 1.0,  timerScale: 1.0 },
+    warchief: { incomeScale: 1.35, waveGrowth: 2, waveInterval: 70,  firstWaveDelayScale: 0.8, startIronScale: 0.7, enemyHpScale: 1.1, enemyDamageScale: 1.15, timerScale: 0.85 }
 }
+var difficultyOrder = ["story", "warrior", "warchief"]
+var defaultDifficulty = "warrior"
+
+function difficultyFor(name) { return difficulty[name] || difficulty[defaultDifficulty] }
 
 function unit(typeId) { return units[typeId] }
 function building(typeId) { return buildings[typeId] }

@@ -19,8 +19,11 @@ foreach(_f IN LISTS IRONFANG_RES_FILES)
     set_source_files_properties("${_f}" PROPERTIES QT_RESOURCE_ALIAS "${_rel}")
 endforeach()
 
+# Loc.qml is a QML singleton (pragma Singleton); qt_add_qml_module needs to be told
+set_source_files_properties(Loc.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+
 clay_app(ironfang
-    VERSION 0.1.0
+    VERSION 0.2.0
 
     LINK_LIBS
         Qt::Core
@@ -43,7 +46,9 @@ clay_app(ironfang
         Projectile.qml
         HealthBar3D.qml
         Hud.qml
-        MenuOverlay.qml
+        Frontend.qml
+        Storage.qml
+        Loc.qml
         AudioController.qml
         AssetShowcase.qml
         scripts/NavGrid.js
@@ -57,7 +62,12 @@ clay_app(ironfang
         scripts/Mission.js
         scripts/Objectives.js
         scripts/Triggers.js
+        scripts/Save.js
+        scripts/Campaign.js
         missions/classic_siege.js
+        missions/campaign.js
+        i18n/en.js
+        i18n/pt_BR.js
         config/assets.js
         config/balance.js
         config/assetmeta.js
