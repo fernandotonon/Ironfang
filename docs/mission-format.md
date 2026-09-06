@@ -65,10 +65,26 @@ values.
 Progress specs:
 
 * `{ type: "entityHp", tag }` — display only ("… (1200 HP)"); a trigger completes the objective.
-* `{ type: "unitCount", team, unitType?, count }` — completes when the count is reached.
+  The tag may be created later by a `spawnUnits` action (e.g. an assault leader).
+* `{ type: "unitCount", team, unitType?, count, op? }` — completes when the count is reached;
+  with `op: "<="` it completes when the count drops to `count` (e.g. "no scouts left").
+* `{ type: "produced", team?, unitType?, count }` — units produced during the mission.
 * `{ type: "resource", amount }` — completes when the player's iron reaches `amount`.
+* `{ type: "timer", seconds }` — counts from the moment the objective became active; completes
+  at `seconds` ("prepare your defences", "hold the region").
+* a plain `target: N` with no spec — a counter driven by `progressObjective { id, delta: 1 }`.
 
 Or none, and triggers call `completeObjective` / `failObjective` / `progressObjective`.
+
+Extra flags:
+
+* `completeOnVictory` — resolved when the mission is won instead of during play: `true`
+  (always complete), `{ type: "entityHpAtLeast", tag, fraction }`, `{ type: "unitsLostAtMost", n }`,
+  `{ type: "buildingsLostAtMost", n }`, `{ type: "timeAtMost", seconds }` (scaled by the
+  difficulty's `timerScale`). Such objectives never block the automatic victory rule; unmet ones
+  are marked failed on the results screen. Use it for "protect X" and optional challenges.
+* `internal: true` — a bookkeeping counter (never shown, never counted in results), e.g.
+  "workers lost" feeding a `failObjective` trigger.
 
 State machine: `hidden → active → complete | failed`. With `victory.auto` (default) the mission
 is won when every primary objective is complete; a failed primary objective is a defeat.
@@ -98,7 +114,14 @@ Event conditions (matched against game events; extra fields filter):
 | `entitySelected` | `tag`, `entityType` | exactly one entity is selected |
 | `objectiveCompleted`, `objectiveFailed` | `id` | objective state changes |
 | `waveLaunched` | | the enemy commander sends a wave (`size`, `wave`) |
-| `waveCompleted`, `buildingActivated`, `dialogueCompleted`, `checkpointReached` | `id` / `tag` | reserved for M3–M5 |
+| `waveCompleted` | | every unit of the latest wave is dead (`wave`) |
+| `orderIssued` | `kind`: move, attack, gather, return | the player gives an order |
+| `resourceDeposited` | | a worker delivers iron (`amount`, `total`) |
+| `productionQueued` | `unitType`, `tag` | the player queues a unit |
+| `cameraMoved` | | the camera pivot moved or zoomed noticeably (once) |
+| `tutorialStep`, `tutorialFinished` | `id` | tutorial progress (`skipped` on finish) |
+| `missionEnded` | | `result`, `medal` |
+| `buildingActivated`, `dialogueCompleted`, `checkpointReached` | `id` / `tag` | reserved for M4–M5 |
 
 Polled conditions (evaluated each step, fire on the rising edge — a repeating region trigger
 fires once per entry):
@@ -119,7 +142,7 @@ fires once per entry):
 | `playAudio` | `sound`, `volume` | `AudioController.play` |
 | `completeObjective`, `failObjective` | `id` | |
 | `addObjective` | objective fields (`id`, `text`, `optional`, `progress`) | adds or reveals |
-| `progressObjective` | `id`, `current`, `target` | |
+| `progressObjective` | `id`, `current`, `target` or `delta` | set or increment a counter |
 | `addResources` | `amount` | player iron |
 | `spawnUnits` | `units: [{type, team?, x?, z?, tag?}]`, `team`, `x`, `z`, `attack: <tag>` | spawns; with `attack`, attack-moves on that entity |
 | `startWave` | | the enemy commander launches its next wave now |
@@ -129,6 +152,35 @@ fires once per entry):
 
 Unknown action types are reported in `Triggers` state (`unknownActions`) and skipped, never
 thrown; `Mission.validate` rejects them before a mission ships.
+
+## Entity flags
+
+`productionEnabled: false` (a building that cannot produce until an `enableProduction` action;
+the HUD greys its buttons and says "not operational"), `hpFraction: 0.6` (starts damaged).
+
+## Tutorial
+
+```js
+tutorial: [
+    { id: "camera", text: "tutorial.m1.camera", doneWhen: { type: "cameraMoved" } },
+    { id: "select", text: "tutorial.m1.select", doneWhen: { type: "entitySelected" }, highlight: "world:rukhar" },
+    { id: "produce", text: "tutorial.m1.produce", doneWhen: { type: "productionQueued", unitType: "orc_warrior" }, highlight: "hud:produce" }
+]
+```
+
+`scripts/Tutorial.js` shows one step at a time in the HUD (`Hud.qml` tutorial panel with a Skip
+link). `doneWhen` uses the trigger condition vocabulary (event or polled; `kind` filters
+`orderIssued`). Actions already performed count: the manager keeps the mission's event history, so
+a step whose event already happened completes at once, and polled steps are evaluated as soon as
+they show. `highlight` pulses a HUD panel (`hud:iron`, `hud:objectives`, `hud:selection`,
+`hud:produce`) or draws a ring under a tagged world entity (`world:<tag>`). Finishing (not
+skipping) sets `progress.tutorial.completed`; the tutorial is replayable through Mission 1.
+
+## Medals
+
+`medals: { steel: { optionalAll: true }, gold: { optionalAll: true, time: 600, maxUnitsLost: 3, maxBuildingsLost: 0 } }`
+— published in the briefing and evaluated by `Campaign.medalFor`; `time` is multiplied by the
+difficulty's `timerScale`. Iron is always "complete the mission".
 
 ## Game events
 

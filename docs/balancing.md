@@ -47,10 +47,28 @@ This is a deliberate simplification: the only "hidden" resource injection is tha
 * Use the sim-speed keys (`]` up to 8×) and `--autotest` to watch a match shape quickly;
   `AUTOTEST` log lines report iron, unit counts and the AI state.
 
-## Difficulty presets
+## Difficulty presets (`Balance.difficulty`)
 
-| | income × | wave growth | wave interval |
-|---|---:|---:|---:|
-| Easy | 0.7 | 0 | 110 s |
-| Normal | 1.0 | 1 | 85 s |
-| Hard | 1.35 | 2 | 70 s |
+| | enemy income × | wave growth | wave interval | first wave × | start iron × | enemy hp × | enemy damage × | timer targets × |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| Story | 0.7 | 0 | 110 s | 1.4 | 1.6 | 0.8 | 0.75 | 1.5 |
+| Warrior | 1.0 | 1 | 85 s | 1.0 | 1.0 | 1.0 | 1.0 | 1.0 |
+| Warchief | 1.35 | 2 | 70 s | 0.8 | 0.7 | 1.1 | 1.15 | 0.85 |
+
+Missions may override any enemy wave value per difficulty (`difficulty.<name>` block in the
+definition); Missions 2 and 3 do (first wave delay, wave size caps, ogre cadence).
+
+## Campaign missions (first pass, before external playtesting)
+
+| Mission | Map | Player start | Enemy | Primary chain | Optional | Gold time |
+|---|---|---|---|---|---|---|
+| 1 Embers of Ironfang | 48 m | 20 iron, 3 workers, Rukhar; fortress 60 %, foundry 50 % and disabled; 2 deposits × 400 | none; 2 scripted warriors after the 2nd produced warrior | locate outpost → 100 iron → 2 warriors → kill scouts; protect workers | lose no workers | 10:00 |
+| 2 The Stolen Mine | 64 m (First Siege terrain) | 200 iron, 3 workers, Rukhar + warrior + archer, home deposit 350 | outpost (900 HP, produces warrior/archer, income 1.2/s, raids from 4:00 every 2:00, 2→6 units), 12 garrison units on 3 mines | clear 3 mines → hold 2:00 → destroy outpost | finish in 15:00; keep 2 of 3 original workers | 15:00 |
+| 3 Hold the Foundry | 64 m | 300 iron, 4 workers, Rukhar + 2 warriors + 2 archers; 3 deposits (700/700/500) | fortress (income 3.0/s, waves from 2:30 every 1:30, 3 + 2n up to 12, ogre every 4th), west flank 20 s after wave 1, east flank 200 s later, ogre leader + escort after wave 5 | prepare 2:30 → survive 5 waves → kill the leader; protect the Foundry | Foundry ≥ 50 %; ≤ 5 units lost | 18:00 |
+
+Story: ×1.6 iron, later and smaller waves (M2 first raid 5:20, cap 4; M3 first wave 3:30, growth 1,
+cap 8). Warchief: ×0.7 iron, earlier and bigger waves (M2 3:20, 3→8; M3 2:00, 4 + 2n, ogre every 3rd).
+
+Measured with `--autotest-m1` (8×, Warrior): Mission 1 chain completes in ~76 match seconds of
+scripted play with the scouts arriving ~35 s after the Foundry is relit. Missions 2 and 3 have
+only been smoke-loaded (`--smoke`) and need human play for pacing.

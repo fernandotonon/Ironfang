@@ -34,7 +34,9 @@ var units = {
 var buildings = {
     clan_fortress:  { name: "Clan Fortress",  hp: 2500, produces: ["goblin_worker"], footprint: { w: 10, d: 10 }, dropOff: true },
     war_foundry:    { name: "War Foundry",    hp: 1400, produces: ["orc_warrior", "orc_archer", "ironhide_ogre"], footprint: { w: 8, d: 8 } },
-    enemy_fortress: { name: "Enemy Fortress", hp: 2500, produces: [], footprint: { w: 10, d: 10 } },
+    enemy_fortress: { name: "Enemy Fortress", hp: 2500, produces: [], footprint: { w: 10, d: 10 }, enemyProducer: true },
+    enemy_outpost:  { name: "Bloodmaw Outpost", hp: 900, produces: [], footprint: { w: 6, d: 6 }, enemyProducer: true },
+    watchtower:     { name: "Watchtower",     hp: 500,  produces: [], footprint: { w: 3, d: 3 } },
     iron_deposit:   { name: "Iron Deposit",   hp: 0,    produces: [], footprint: { w: 4, d: 4 }, iron: 600, resource: true },
     rocks_large:    { name: "Rocks",          hp: 0,    produces: [], footprint: { w: 5, d: 4 }, obstacle: true },
     rocks_small:    { name: "Rocks",          hp: 0,    produces: [], footprint: { w: 3, d: 3 }, obstacle: true },

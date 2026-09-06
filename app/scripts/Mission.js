@@ -40,9 +40,10 @@ function kindOf(type) {
     return null
 }
 
-var EVENT_CONDITIONS = ["missionStarted", "entityDestroyed", "unitProduced", "entitySelected",
-                        "objectiveCompleted", "objectiveFailed", "waveLaunched", "waveCompleted",
-                        "buildingActivated", "dialogueCompleted", "checkpointReached"]
+var EVENT_CONDITIONS = ["missionStarted", "missionEnded", "entityDestroyed", "unitProduced", "entitySelected",
+                        "objectiveCompleted", "objectiveFailed", "objectiveAdded", "waveLaunched", "waveCompleted",
+                        "buildingActivated", "dialogueCompleted", "checkpointReached",
+                        "cameraMoved", "orderIssued", "resourceDeposited", "productionQueued", "tutorialStep", "tutorialFinished"]
 var POLLED_CONDITIONS = ["timerElapsed", "resourceReached", "unitCountReached",
                          "unitEnteredRegion", "unitLeftRegion"]
 var ACTIONS = ["message", "playAudio", "completeObjective", "failObjective", "addObjective",
@@ -66,6 +67,12 @@ function validate(def) {
         if (e.team && ["player", "enemy", "neutral"].indexOf(e.team) < 0) errors.push(where + ": bad team '" + e.team + "'")
         if (e.tag) { if (tags[e.tag]) errors.push(where + ": duplicate tag '" + e.tag + "'"); tags[e.tag] = true }
     })
+    // tags created at runtime by spawnUnits actions count as known
+    ;(def.triggers || []).forEach(function(t) {
+        ;((t && t.actions) || []).forEach(function(a) {
+            if (a && a.type === "spawnUnits" && Array.isArray(a.units)) a.units.forEach(function(u) { if (u && u.tag) tags[u.tag] = true })
+        })
+    })
     ;(def.objectives || []).forEach(function(o, i) {
         if (!o.id) errors.push("objectives[" + i + "]: missing id")
         else if (objectiveIds[o.id]) errors.push("objectives[" + i + "]: duplicate id '" + o.id + "'")
@@ -87,6 +94,15 @@ function validate(def) {
             if (a.type === "spawnUnits" && (!Array.isArray(a.units) || a.units.some(function(u) { return kindOf(u.type) !== "unit" })))
                 errors.push(where + ".actions[" + j + "]: spawnUnits.units must list unit types")
         })
+    })
+    ;(def.tutorial || []).forEach(function(st, i) {
+        var where = "tutorial[" + (st.id || i) + "]"
+        if (!st.id) errors.push(where + ": missing id")
+        if (!st.text) errors.push(where + ": missing text")
+        if (!st.doneWhen || !st.doneWhen.type) errors.push(where + ": missing doneWhen.type")
+        else if (EVENT_CONDITIONS.indexOf(st.doneWhen.type) < 0 && POLLED_CONDITIONS.indexOf(st.doneWhen.type) < 0) errors.push(where + ": unknown condition '" + st.doneWhen.type + "'")
+        if (st.doneWhen && st.doneWhen.tag && !tags[st.doneWhen.tag]) errors.push(where + ": tag '" + st.doneWhen.tag + "' not found")
+        if (st.highlight && st.highlight.indexOf("world:") === 0 && !tags[st.highlight.slice(6)]) errors.push(where + ": highlight tag not found")
     })
     if (def.enemy) {
         if (def.enemy.producer && !tags[def.enemy.producer]) errors.push("enemy.producer tag '" + def.enemy.producer + "' not found")
@@ -118,7 +134,7 @@ function load(def, difficultyName) {
     if (m.enemy) m.enemy = merge({ producer: null, target: null, waves: {} }, m.enemy)
     else m.enemy = null
     m.objectives = (m.objectives || []).map(function(o) {
-        return merge({ primary: !o.optional, optional: false, hidden: false, progress: null }, o)
+        return merge({ primary: !o.optional, optional: false, hidden: false, internal: false, progress: null, completeOnVictory: null }, o)
     })
     m.triggers = (m.triggers || []).map(function(t, i) {
         return merge({ id: "trigger_" + i, repeat: false, actions: [] }, t)
@@ -127,12 +143,13 @@ function load(def, difficultyName) {
     // medals: iron = completed; steel/gold = published criteria (docs/story-and-campaign.md)
     m.medals = merge({ steel: { optionalAll: true }, gold: { optionalAll: true, time: 0 } }, m.medals || {})
     m.briefing = merge({ intro: "", outro: "", illustration: "" }, m.briefing || {})
+    m.tutorial = (m.tutorial || []).map(function(st) { return merge({ highlight: "", optional: false }, st) })
     m.victory = merge({ auto: true }, m.victory || {})       // auto: all primary objectives -> victory
     m.tags = {}
     m.entities = m.entities.map(function(e) {
         var kind = kindOf(e.type)
         var stats = kind === "unit" ? Balance.units[e.type] : Balance.buildings[e.type]
-        var out = merge({ team: kind === "unit" ? "player" : "neutral", tag: null, rally: null }, e)
+        var out = merge({ team: kind === "unit" ? "player" : "neutral", tag: null, rally: null, productionEnabled: true, hpFraction: 1 }, e)
         out.kind = kind
         if (kind === "building" && out.iron === undefined) out.iron = stats.iron || 0
         if (out.tag) m.tags[out.tag] = out

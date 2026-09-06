@@ -27,6 +27,14 @@ is called done. Items marked *(M1+)* are not exercised by the Milestone 0 spike 
 - [ ] Pause menu: Resume, Restart Mission, Settings (and back to the pause menu), Quit to Menu (returns to the campaign map for campaign missions, otherwise the main menu).
 - [ ] Story / Warrior / Warchief: start iron 240 / 150 / 105 in Classic Siege; enemy units hit softer/harder.
 
+## Campaign missions 1–3 (Milestone 3)
+- [ ] Mission 1: tutorial panel shows step 1/10; moving the camera, selecting Rukhar and moving complete steps 1–3 (in any order — steps already done are skipped); the ring marks the current world target; "Skip tutorial" hides it and the mission still plays.
+- [ ] Mission 1: entering the outpost area completes "Locate"; 100 iron relights the Foundry (buttons become usable); two warriors queued/produced spawn the scouts; killing them wins; losing a worker fails the optional objective; all workers dead = defeat.
+- [ ] Mission 2: clearing the guards from a mine adds 1/3; after 3/3 a 2-minute hold objective appears and the outpost sends raids; destroying the outpost (red box placeholder) wins; results show the 15-minute optional.
+- [ ] Mission 3: 150 s countdown objective, waves target the Foundry, west flank ~20 s after wave 1, east flank later; after the 5th wave is beaten the ogre leader appears; killing it wins; foundry ≥ 50 % and ≤ 5 losses are resolved on the results screen.
+- [ ] Completing Mission 3 unlocks Survival on the main menu (still marked as a later build) and Mission 4 shows "in development".
+- [ ] Medal criteria in the briefing change with Story / Warrior / Warchief (time targets ×1.5 / ×1 / ×0.85).
+
 ## Camera
 - [ ] W/A/S/D and arrow keys pan; speed feels constant when zoomed in vs out.
 - [ ] Mouse wheel zooms toward the cursor; cannot pass through the ground; zoom-out stops at the map scale.

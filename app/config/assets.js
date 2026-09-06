@@ -43,6 +43,9 @@ var buildings = {
     rocks_large:    { displayName: "Rocks",          model: "assets/runtime/large_rocks/LargeRocks.qml",     status: "qtmesheditor", scale: 5,   footOffset: 0.46, yawOffset: 0,  portrait: "#606064" },
     rocks_small:    { displayName: "Rocks",          model: "assets/runtime/small_rocks/SmallRocks.qml",     status: "qtmesheditor", scale: 3,   footOffset: 0.29, yawOffset: 0,  portrait: "#606064" },
     dead_tree:      { displayName: "Dead Ironwood",  model: "assets/runtime/dead_tree/DeadIronwoodtree.qml", status: "qtmesheditor", scale: 6,   footOffset: 0.51, yawOffset: 0,  portrait: "#4a3a30" },
+    // placeholders (Box3D, tinted) until the QtMeshEditor models exist - docs/asset-requests.md
+    enemy_outpost:  { displayName: "Bloodmaw Outpost", model: "", status: "placeholder", scale: 1, footOffset: 0, yawOffset: 0, portrait: "#8a3a3a", placeholderColor: "#7a2f2a", placeholderHeight: 3.5 },
+    watchtower:     { displayName: "Watchtower",       model: "", status: "placeholder", scale: 1, footOffset: 0, yawOffset: 0, portrait: "#7a4a3a", placeholderColor: "#6a3a30", placeholderHeight: 6 },
     broken_cart:    { displayName: "Broken Cart",    model: "assets/runtime/broken_cart/BrokenCart.qml",     status: "qtmesheditor", scale: 4,   footOffset: 0.21, yawOffset: 0,  portrait: "#5a4a3a" }
 }
 

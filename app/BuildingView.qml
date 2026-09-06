@@ -67,9 +67,9 @@ Node {
     Box3D {
         visible: !root.modelReady
         width: root.footW * 0.9
-        height: root.stats.resource ? 1.6 : (root.stats.obstacle ? 1.8 : 5)
+        height: root.typeDef.placeholderHeight || (root.stats.resource ? 1.6 : (root.stats.obstacle ? 1.8 : 5))
         depth: root.footD * 0.9
-        color: root.team === "enemy" ? "#7a3f3a" : (root.team === "player" ? "#6b4f3d" : "#5d6066")
+        color: root.typeDef.placeholderColor || (root.team === "enemy" ? "#7a3f3a" : (root.team === "player" ? "#6b4f3d" : "#5d6066"))
         useToonShading: true
         showEdges: true
         edgeColor: "#26221e"

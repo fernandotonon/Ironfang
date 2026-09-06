@@ -18,10 +18,15 @@ then played by a game built on [Clayground](https://github.com/MisterGC/claygrou
 > story: [`docs/story-and-campaign.md`](docs/story-and-campaign.md), plan and milestone log:
 > [`docs/broken-crown-plan.md`](docs/broken-crown-plan.md). Done so far: M1 mission foundation
 > ([`docs/mission-format.md`](docs/mission-format.md); the original level is `app/missions/classic_siege.js`)
-> and M2 campaign shell (main menu, campaign map, briefing, results, saves
+> M2 campaign shell (main menu, campaign map, briefing, results, saves
 > [`docs/save-format.md`](docs/save-format.md), Story/Warrior/Warchief, English + Brazilian
-> Portuguese [`docs/localization.md`](docs/localization.md)). Missing art is tracked in
-> [`docs/asset-requests.md`](docs/asset-requests.md).
+> Portuguese [`docs/localization.md`](docs/localization.md)) and M3 (contextual tutorial and
+> campaign Missions 1–3 with medals and optional objectives). Missing art is tracked in
+> [`docs/asset-requests.md`](docs/asset-requests.md). Next gate: external playtesting of
+> Missions 1–3 before Milestone 4 (abilities, veterancy, repair, gates).
+>
+> Debug flags: `--autotest` (Classic Siege scripted match), `--autotest-m1` (Mission 1 end to
+> end, prints the results record), `--smoke <missionId>` (load a mission, log its state, quit).
 
 **The match:** select goblin workers and send them to an iron deposit; spend iron at the Clan
 Fortress (workers) and the War Foundry (warriors, archers, an ogre); hold off the enemy waves;

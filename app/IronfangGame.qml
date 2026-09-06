@@ -21,6 +21,7 @@ import "config/balance.js" as Balance
 import "scripts/Mission.js" as Mission
 import "scripts/Objectives.js" as Objectives
 import "scripts/Triggers.js" as Triggers
+import "scripts/Tutorial.js" as Tutorial
 import "missions/classic_siege.js" as ClassicSiege
 import "scripts/Save.js" as Save
 import "scripts/Campaign.js" as Campaign
@@ -52,6 +53,16 @@ Item {
     property string objectiveText: ""                 // HUD: active primary objective line
     property var objectiveRows: []                    // HUD: visible objectives (plain rows)
     property int _objRev: -1
+    property var tutorial: null                       // Tutorial.create() state (missions with steps)
+    property string tutorialText: ""
+    property string tutorialHighlight: ""             // "hud:<panel>" | "world:<tag>" | ""
+    property int tutorialIndex: 0
+    property int tutorialTotal: 0
+    readonly property var tutorialTarget: tutorialHighlight.indexOf("world:") === 0 ? (void tick, entityByTag(tutorialHighlight.slice(6))) : null
+    property var producedCounts: ({})                 // "team/type" -> produced this mission
+    property bool _cameraMoved: false
+    property var _camStart: null
+    property int _wavesCompleted: 0
 
     // ---- match state -----------------------------------------------------------------------
     property string phase: "title"              // title | playing | paused | victory | defeat | showcase | credits
@@ -111,7 +122,24 @@ Item {
         loadSaves()
         applySettings()
         if (autotest) startMission("classic_siege", Balance.defaultDifficulty)
+        else if (autotestM1) { Campaign.resetProgress(progress); startMission("m1_embers", Balance.defaultDifficulty) }
+        else if (smokeMission !== "") startMission(smokeMission, Balance.defaultDifficulty)
         else if (Qt.application.arguments.indexOf("--showcase") >= 0) phase = "showcase"
+    }
+    // --smoke <missionId>: load a mission, run 8 s at 4x, log its state, screenshot, quit (desktop).
+    readonly property string smokeMission: { const a = Qt.application.arguments; const i = a.indexOf("--smoke"); return i >= 0 && a[i + 1] ? a[i + 1] : "" }
+    Timer {
+        running: game.smokeMission !== "" && game.phase === "playing"
+        interval: 8000; repeat: false
+        onTriggered: {
+            console.log("SMOKE " + mission.id + " phase=" + phase + " units=" + units.filter(u => u.alive).length + " buildings=" + buildings.length
+                        + " iron=" + Math.floor(iron) + " objectives=" + JSON.stringify(objectiveRows.map(o => o.id + ":" + o.state))
+                        + " tutorial=" + (tutorial ? (Tutorial.current(tutorial) ? Tutorial.current(tutorial).id : "done") : "none")
+                        + " enemyAI=" + (enemyAI ? enemyAI.state : "none") + " fps=" + fps.toFixed(0)
+                        + " camera=" + world.rig.pivot.x.toFixed(1) + "," + world.rig.pivot.z.toFixed(1) + "/" + world.rig.distance.toFixed(1) + " start=" + JSON.stringify(_camStart))
+            screenshot("smoke-" + mission.id)
+            if (Qt.platform.os !== "wasm") Qt.callLater(function() { quitTimer.start() })
+        }
     }
 
     // ---- campaign flow -------------------------------------------------------------------------
@@ -150,6 +178,9 @@ Item {
         message = ""
         objectives = Objectives.create(mission.objectives)
         triggers = Triggers.create(mission.triggers)
+        tutorial = mission.tutorial.length ? Tutorial.create(mission.tutorial, progress.tutorial.completed) : null
+        producedCounts = {}
+        _cameraMoved = false; _wavesCompleted = 0
         _objRev = -1
         buildLevel()
         pathfinder.walkableData = Nav.walkableData()
@@ -157,9 +188,11 @@ Item {
         enemyAI = enemyCfg ? EnemyAI.create(enemyCfg, difficulty) : null
         const cam = mission.map.camera
         world.rig.applyState({ px: cam.x, py: 0, pz: cam.z, yaw: cam.yaw, pitch: cam.pitch, distance: cam.distance })
+        _camStart = { x: cam.x, z: cam.z, d: cam.distance }
         phase = "playing"
         audio.startMusic()
         refreshObjectives()
+        refreshTutorial()
         gameEvent("missionStarted", { id: mission.id })
     }
     onPhaseChanged: {
@@ -246,10 +279,11 @@ Item {
         const b = buildingComp.createObject(world.buildingRoot, {
             entityId: nextEntityId++, typeId: typeId, team: team, tag: (def && def.tag) || "",
             typeDef: Assets.building(typeId) || {}, stats: stats,
-            x: x, z: z, hp: stats.hp || 0, maxHp: stats.hp || 0,
+            x: x, z: z, hp: (stats.hp || 0) * (def && def.hpFraction !== undefined ? def.hpFraction : 1), maxHp: stats.hp || 0,
             iron: def && def.iron !== undefined ? def.iron : (stats.iron || 0),
             rally: def && def.rally ? { x: def.rally.x, z: def.rally.z } : null,
-            queue: (stats.produces && stats.produces.length) || typeId === "enemy_fortress" ? Production.createQueue(5) : null
+            productionEnabled: !(def && def.productionEnabled === false),
+            queue: (stats.produces && stats.produces.length) || stats.enemyProducer ? Production.createQueue(5) : null
         })
         if (stats.footprint) Nav.blockRect(x - stats.footprint.w / 2, z - stats.footprint.d / 2,
                                            x + stats.footprint.w / 2, z + stats.footprint.d / 2)
@@ -429,6 +463,7 @@ Item {
     }
 
     function orderMove(list, g) {
+        gameEvent("orderIssued", { kind: "move", count: list.length })
         const dests = Nav.distribute(g.x, g.z, list.length, 1.5)
         let unreachable = 0
         for (let i = 0; i < list.length; ++i) {
@@ -444,6 +479,7 @@ Item {
     }
 
     function orderAttack(list, target) {
+        gameEvent("orderIssued", { kind: "attack", count: list.length, tag: target.tag, entityType: target.typeId })
         for (const u of list) {
             Gather.stop(u)
             u.order = "attack"; u.target = target; u.chaseOrigin = null; u.repathTimer = 0
@@ -455,6 +491,7 @@ Item {
     }
 
     function orderGather(list, node, g) {
+        gameEvent("orderIssued", { kind: "gather", count: list.length, tag: node.tag })
         let workers = 0
         for (const u of list) {
             if (u.typeId !== "goblin_worker") { if (g) { u.order = "move"; u.target = null; u.moveTo(Nav.distribute(g.x, g.z, 1, 1)[0]) }; continue }
@@ -468,6 +505,7 @@ Item {
     }
 
     function orderReturn(list, g) {
+        gameEvent("orderIssued", { kind: "return", count: list.length })
         let returning = 0
         for (const u of list) {
             if (u.typeId === "goblin_worker" && Gather.returnHome(u)) { u.order = "gather"; returning++ }
@@ -485,7 +523,7 @@ Item {
         if (!building.productionEnabled) { flash(building.typeDef.displayName + " is not operational yet"); audio.play("invalid"); return }
         const r = Production.enqueue(building.queue, building.typeId, typeId, economy)
         iron = economy.iron
-        if (!r.ok) { flash(r.reason); audio.play("invalid") } else audio.play("select", 0.5)
+        if (!r.ok) { flash(r.reason); audio.play("invalid") } else { audio.play("select", 0.5); gameEvent("productionQueued", { unitType: typeId, tag: building.tag }) }
         tick++
     }
 
@@ -556,7 +594,8 @@ Item {
         entityByTag: (tag) => game.entityByTag(tag),
         countUnits: (team, type) => game.units.filter(u => u.alive && u.team === team && (!type || u.typeId === type)).length,
         units: (team, type) => game.units.filter(u => u.alive && (!team || u.team === team) && (!type || u.typeId === type)),
-        iron: () => game.economy.iron
+        iron: () => game.economy.iron,
+        produced: (team, type) => { let n = 0; for (const k in game.producedCounts) { const [t, ty] = k.split("/"); if (t === team && (!type || ty === type)) n += game.producedCounts[k] } return n }
     })
     readonly property var triggerContext: ({
         query: missionQuery,
@@ -568,7 +607,8 @@ Item {
             completeObjective: (a) => Objectives.complete(objectives, a.id, matchTime),
             failObjective:     (a) => Objectives.fail(objectives, a.id, matchTime),
             addObjective:      (a) => Objectives.add(objectives, a),
-            progressObjective: (a) => Objectives.setProgress(objectives, a.id, a.current, a.target, matchTime),
+            progressObjective: (a) => a.delta !== undefined ? Objectives.addProgress(objectives, a.id, a.delta, a.target, matchTime)
+                                                             : Objectives.setProgress(objectives, a.id, a.current, a.target, matchTime),
             addResources:      (a) => { Economy.deposit(economy, a.amount); iron = economy.iron },
             spawnUnits:        (a) => spawnGroup(a),
             startWave:         (a) => { if (enemyAI) enemyAI.nextWaveAt = matchTime },
@@ -584,8 +624,29 @@ Item {
         if (!triggers) return
         const ev = Object.assign({ type: type, time: matchTime }, payload || {})
         Triggers.handle(triggers, ev, triggerContext)
+        if (tutorial) { Tutorial.handle(tutorial, ev); pumpTutorialEvents() }
         pumpObjectiveEvents()
     }
+
+    // ---- tutorial (Tutorial.js): steps complete through the same events; HUD shows one at a time
+    function pumpTutorialEvents() {
+        if (!tutorial) return
+        const evs = Tutorial.drain(tutorial)
+        for (const e of evs) {
+            if (e.type === "tutorialFinished" && !e.skipped && !progress.tutorial.completed) { progress.tutorial.completed = true; saveProgress() }
+            if (e.type === "tutorialFinished" && e.skipped) { progress.tutorial.skipped = true; saveProgress() }
+            Triggers.handle(triggers, Object.assign({ time: matchTime }, e), triggerContext)
+        }
+        if (evs.length) refreshTutorial()
+    }
+    function refreshTutorial() {
+        const st = tutorial ? Tutorial.current(tutorial) : null
+        tutorialText = st ? Loc.trOr(st.text) : ""
+        tutorialHighlight = st ? (st.highlight || "") : ""
+        tutorialIndex = tutorial ? tutorial.index : 0
+        tutorialTotal = tutorial ? Tutorial.total(tutorial) : 0
+    }
+    function skipTutorial() { if (tutorial) { Tutorial.skip(tutorial); pumpTutorialEvents() } }
 
     // objective state changes are game events too (triggers can chain on them)
     function pumpObjectiveEvents() {
@@ -593,14 +654,25 @@ Item {
         let guard = 0
         while (objectives.events.length && guard++ < 20) {
             const evs = Objectives.drain(objectives)
-            for (const e of evs) if (e.type === "objectiveCompleted" || e.type === "objectiveFailed") Triggers.handle(triggers, Object.assign({ time: matchTime }, e), triggerContext)
+            for (const e of evs) {
+                const ev = Object.assign({ time: matchTime }, e)
+                if (e.type === "objectiveCompleted" || e.type === "objectiveFailed") Triggers.handle(triggers, ev, triggerContext)
+                if (tutorial) Tutorial.handle(tutorial, ev)
+            }
         }
+        if (tutorial) pumpTutorialEvents()
     }
 
     function stepMission(dt) {
         if (!triggers || !objectives) return
         Triggers.step(triggers, dt, triggerContext)
         Objectives.step(objectives, missionQuery, matchTime)
+        if (tutorial) { if (Tutorial.step(tutorial, dt, missionQuery)) pumpTutorialEvents() }
+        if (!_cameraMoved && _camStart && matchTime > 1.0) {       // the rig eases into place during the first frames
+            const p = world.rig.pivot
+            if (Math.abs(p.x - _camStart.x) + Math.abs(p.z - _camStart.z) > 4 || Math.abs(world.rig.distance - _camStart.d) > 4) { _cameraMoved = true; gameEvent("cameraMoved", {}) }
+        }
+        stepWaves()
         pumpObjectiveEvents()
         if (objectives.rev !== _objRev) refreshObjectives()
         if (phase === "playing" && mission.victory.auto && Objectives.allPrimaryComplete(objectives)) endMatch("victory")
@@ -612,6 +684,14 @@ Item {
         objectiveText = Objectives.primaryText(objectives, (k) => Loc.trOr(k))
         objectiveRows = Objectives.visible(objectives).map(o => ({ id: o.id, text: o.text, state: o.state, optional: o.optional,
                                                                    current: o.current, target: o.target, showCount: !!(o.target > 0 && !(o.progress && o.progress.type === "entityHp")) }))
+    }
+
+    // waveCompleted: every unit of the latest launched wave is dead
+    function stepWaves() {
+        if (!enemyAI || enemyAI.wavesLaunched <= _wavesCompleted) return
+        for (const u of units) if (u.alive && u.team === "enemy" && u.inWave) return
+        _wavesCompleted = enemyAI.wavesLaunched
+        gameEvent("waveCompleted", { wave: _wavesCompleted })
     }
 
     function spawnGroup(a) {
@@ -634,7 +714,7 @@ Item {
         approach: (w, node) => Combat.approachPoint(w, node, 0.25),
         findDropOff: (w) => game.playerFortress && game.playerFortress.alive ? game.playerFortress : null,
         findDeposit: (w) => game.nearestDeposit(w),
-        deposit: (w, amount) => { Economy.deposit(game.economy, amount); game.iron = game.economy.iron; audio.play("deposit", 0.7) }
+        deposit: (w, amount) => { Economy.deposit(game.economy, amount); game.iron = game.economy.iron; audio.play("deposit", 0.7); game.gameEvent("resourceDeposited", { amount: amount, total: game.economy.gathered }) }
     })
     function nearestDeposit(w) {
         let best = null, bestD = 1e9
@@ -681,6 +761,7 @@ Item {
                 const near = Combat.acquireTarget(u, hostilesFor(u), Balance.match.aggroRadius)
                 if (near && near !== u.target && !(near.isBuilding && u.order === "attackMove" && u.target && !u.target.isBuilding)) {
                     if (u.order === "idle") { u.order = "attack"; u.chaseOrigin = { x: u.x, z: u.z }; u.autoAcquired = true }
+                    else if (u.order === "attackMove" && near !== u.primaryTarget) { u.chaseOrigin = { x: u.x, z: u.z }; u.autoAcquired = true }
                     u.target = near; u.repathTimer = 0
                 }
             }
@@ -702,8 +783,10 @@ Item {
                     u.moveTo(Combat.approachPoint(u, u.target, attackStandoff(u)))
                 }
                 if (u.autoAcquired && u.chaseOrigin && Combat.dist(u, u.chaseOrigin) > Balance.match.leashRadius) {
-                    u.target = null; u.order = "idle"; u.autoAcquired = false
-                    u.moveTo(u.chaseOrigin)
+                    const origin = u.chaseOrigin
+                    u.autoAcquired = false; u.chaseOrigin = null
+                    if (u.order === "attackMove" && u.primaryTarget && Combat.isValidTarget(u.primaryTarget)) { u.target = u.primaryTarget; u.repathTimer = 0 }   // back to the march
+                    else { u.target = null; u.order = "idle"; u.moveTo(origin) }
                 }
             }
         }
@@ -787,6 +870,7 @@ Item {
                     const spots = Nav.distribute(b.rally.x, b.rally.z, 8, 1.4)
                     u.moveTo(spots[Math.floor(Math.random() * spots.length)])
                 }
+                const key = b.team + "/" + done; producedCounts[key] = (producedCounts[key] || 0) + 1
                 gameEvent("unitProduced", { unitType: done, team: b.team, tag: b.tag })
             }
         }
@@ -821,7 +905,10 @@ Item {
 
     function endMatch(result) {
         if (phase !== "playing") return
+        if (autotestM1) console.log("AUTOTEST-M1 endMatch(" + result + ") objectives=" + JSON.stringify(objectives.list.map(o => o.id + ":" + o.state)) + " fortressHp=" + (playerFortress ? playerFortress.hp : "-") + "\n" + new Error().stack.split("\n").slice(0, 4).join(" <- "))
         setSelection([])
+        if (result === "victory") Objectives.resolveAtVictory(objectives, { entityByTag: entityByTag, unitsLost: unitsLost, buildingsLost: buildingsLost, timerScale: mission.difficultyValues.timerScale }, matchTime)
+        refreshObjectives()
         const summary = Objectives.summary(objectives)
         const r = {
             missionId: currentMissionId, missionTitle: missionTitleText(), campaign: Campaign.isCampaignMission(currentMissionId),
@@ -865,6 +952,23 @@ Item {
                 materials: PrincipledMaterial { baseColor: "#e0b24a"; opacity: 0.35; alphaMode: PrincipledMaterial.Blend; lighting: PrincipledMaterial.NoLighting }
                 pickable: false
             }
+        }
+    }
+    // tutorial world highlight: pulsing ring at the step's target entity
+    Node {
+        id: tutMarker
+        parent: world.buildingRoot
+        readonly property var t: game.tutorialTarget
+        readonly property real size: t ? Math.max(t.footW || 2, t.footD || 2, 2) : 2
+        visible: t !== null && game.phase === "playing"
+        x: t ? t.x : 0; z: t ? t.z : 0
+        Model {
+            source: "#Cylinder"; y: 0.04
+            property real pulse: 1
+            NumberAnimation on pulse { from: 0.85; to: 1.25; duration: 900; loops: Animation.Infinite; easing.type: Easing.InOutSine; running: tutMarker.visible }
+            scale: Qt.vector3d(0.02 * pulse * tutMarker.size, 0.0008, 0.02 * pulse * tutMarker.size)
+            materials: PrincipledMaterial { baseColor: "#e0b24a"; opacity: 0.45; alphaMode: PrincipledMaterial.Blend; lighting: PrincipledMaterial.NoLighting }
+            pickable: false
         }
     }
     AudioController { id: audio }
@@ -1005,6 +1109,11 @@ Item {
         objective: game.objectiveText
         objectiveRows: game.objectiveRows
         title: game.missionTitleText()
+        tutorialText: game.tutorialText
+        tutorialHighlight: game.tutorialHighlight
+        tutorialIndex: game.tutorialIndex
+        tutorialTotal: game.tutorialTotal
+        onSkipTutorialRequested: game.skipTutorial()
         onProduceRequested: (b, t) => game.produce(b, t)
         onCancelProductionRequested: (b) => game.cancelProduction(b)
         touchMode: game.touchMode
@@ -1091,6 +1200,51 @@ Item {
             case 29: log("after restart: phase=" + phase + " units=" + units.length + " buildings=" + buildings.length + " iron=" + iron); break
             case 30: log("DONE"); if (Qt.platform.os !== "wasm") Qt.quit(); break
             }
+        }
+    }
+    // --autotest-m1: drives Mission 1 through its whole objective chain at 8x and reports the
+    // results record (integration smoke test: new campaign -> Mission 1 -> results -> Mission 2 unlocked).
+    readonly property bool autotestM1: Qt.application.arguments.indexOf("--autotest-m1") >= 0
+    property string m1Stage: "start"
+    Timer {
+        running: game.autotestM1 && game.phase === "playing"
+        interval: 1000; repeat: true
+        onTriggered: {
+            const log = (m) => console.log("AUTOTEST-M1[" + m1Stage + "] t=" + matchTime.toFixed(0) + "s " + m + " | iron " + Math.floor(iron)
+                                           + " objectives " + JSON.stringify(objectiveRows.map(o => o.id + ":" + o.state)) + " tutorial " + (tutorial && Tutorial.current(tutorial) ? Tutorial.current(tutorial).id : "done"))
+            const mine = units.filter(u => u.alive && u.team === "player")
+            const workers = mine.filter(u => u.typeId === "goblin_worker"), army = mine.filter(u => u.typeId !== "goblin_worker")
+            const obj = (id) => Objectives.get(objectives, id)
+            switch (m1Stage) {
+            case "start":
+                setSelection([entityByTag("rukhar")]); world.rig.panBy(6, 0)
+                orderMove(mine, { x: 30, z: 27 }); simSpeed = 8; log("warband marches to the outpost"); m1Stage = "walk"; break
+            case "walk":
+                if (obj("locate").state === "complete") { orderGather(workers, entityByTag("deposit_near"), null); log("outpost found, workers gather"); m1Stage = "gather" } break
+            case "gather":
+                if (obj("gather") && obj("gather").state === "complete") { log("foundry relit (productionEnabled=" + playerFoundry.productionEnabled + ")"); m1Stage = "produce" } break
+            case "produce":
+                if (iron >= 80 && playerFoundry.queue.items.length + producedWarriors() < 2) { produce(playerFoundry, "orc_warrior"); log("warrior queued") }
+                if (obj("scouts") && obj("scouts").state === "active") { orderAttack(army, nearestEnemy(playerFortress)); orderMove(workers, { x: 8, z: 44 }); log("scouts arrived, army engages, workers retreat"); m1Stage = "fight" } break
+            case "fight": {
+                const foe = nearestEnemy(playerFortress)
+                if (foe) { for (const u of army) if (!u.target) orderAttack([u], foe) }
+                if (matchTime % 20 < 1) log("fighting, enemies " + units.filter(u => u.alive && u.team === "enemy").length); break }
+            }
+        }
+        function producedWarriors() { return game.producedCounts["player/orc_warrior"] || 0 }
+        function nearestEnemy(from) { let best = null, d = 1e9; for (const u of game.units) if (u.alive && u.team === "enemy") { const dd = Combat.dist(u, from); if (dd < d) { d = dd; best = u } } return best }
+    }
+    Timer {
+        running: game.autotestM1 && (game.phase === "victory" || game.phase === "defeat")
+        interval: 1500; repeat: false
+        onTriggered: {
+            const r = game.lastResult
+            console.log("AUTOTEST-M1 RESULT " + game.phase + " medal=" + r.medal + " time=" + r.time.toFixed(0) + " optional=" + r.optionalComplete + "/" + r.optionalTotal
+                        + " unlocked=" + JSON.stringify(r.newlyUnlocked) + " m2_unlocked=" + Campaign.isUnlocked(game.progress, "m2_stolen_mine")
+                        + " tutorialCompleted=" + game.progress.tutorial.completed + " saved=" + (storage.read("progress") !== null))
+            game.screenshot("autotest-m1-results")
+            if (Qt.platform.os !== "wasm") Qt.callLater(function() { quitTimer.start() })
         }
     }
     Timer {   // the autotest timer stops when the match ends (phase != playing); finish from here

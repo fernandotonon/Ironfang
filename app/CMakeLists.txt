@@ -65,6 +65,10 @@ clay_app(ironfang
         scripts/Save.js
         scripts/Campaign.js
         missions/classic_siege.js
+        missions/m1_embers.js
+        missions/m2_stolen_mine.js
+        missions/m3_hold.js
+        scripts/Tutorial.js
         missions/campaign.js
         i18n/en.js
         i18n/pt_BR.js

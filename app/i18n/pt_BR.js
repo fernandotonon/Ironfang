@@ -147,6 +147,8 @@ var strings = {
     "building.rocks_small": "Rochas",
     "building.dead_tree": "Ferrolenho Morto",
     "building.broken_cart": "Carroça Quebrada",
+    "building.enemy_outpost": "Posto Avançado Bloodmaw",
+    "building.watchtower": "Torre de Vigia",
 
     // ---- missões da campanha ----
     "mission.m1.title": "Brasas de Ironfang",
@@ -171,5 +173,72 @@ var strings = {
     "classic_siege.objective.destroy": "Destrua a Fortaleza Bloodmaw",
     "classic_siege.wave_warning": "Um bando de guerra inimigo marcha contra a sua fortaleza!",
     "classic_siege.victory": "A fortaleza inimiga está em ruínas. Ironfang resiste.",
-    "classic_siege.defeat": "A Fortaleza do Clã caiu."
+    "classic_siege.defeat": "A Fortaleza do Clã caiu.",
+
+    // ---- tutorial ----
+    "tutorial.step": "TUTORIAL {n} / {total}",
+    "tutorial.skip": "Pular tutorial",
+    "tutorial.m1.camera": "Mova a câmera com W, A, S, D ou as setas. Use a roda para dar zoom. No toque, arraste com dois dedos.",
+    "tutorial.m1.select": "Clique com o botão esquerdo em Rukhar, seu capitão, para selecioná-lo. Arraste uma caixa para selecionar várias unidades.",
+    "tutorial.m1.move": "Clique com o botão direito no chão para mover as unidades selecionadas (toque no chão em telas de toque). Siga para o nordeste.",
+    "tutorial.m1.locate": "Encontre o posto avançado em ruínas ao nordeste. Seus batedores lembram de uma fortaleza e de uma forja apagada lá.",
+    "tutorial.m1.gather": "Selecione seus goblins operários e clique com o botão direito no depósito de ferro. Só os goblins coletam.",
+    "tutorial.m1.deposit": "Goblins carregados voltam sozinhos à Fortaleza do Clã e entregam o ferro. Seu ferro aparece no canto superior esquerdo.",
+    "tutorial.m1.forge": "Colete 100 de ferro. O capataz vai usá-lo para reacender a Forja de Guerra.",
+    "tutorial.m1.produce": "Selecione a Forja de Guerra e coloque um Orc Guerreiro na fila. As unidades se reúnem no ponto de reunião da construção.",
+    "tutorial.m1.attack": "Selecione seus guerreiros e clique com o botão direito em um inimigo para atacar. Guerreiros também reagem sozinhos quando atacados.",
+    "tutorial.m1.finish": "Derrote os batedores Bloodmaw. Mantenha os goblins longe da luta.",
+
+    // ---- personagens ----
+    "speaker.rukhar": "Rukhar",
+    "speaker.foreman": "Capataz Grizzle",
+    "speaker.gorvak": "Gorvak",
+    "speaker.bloodmaw": "Comandante Bloodmaw",
+
+    // ---- Missão 1 ----
+    "m1.brief": "Os clãs estão dispersos e a Coroa de Ferro jaz em pedaços. Rukhar conduz o que restou do bando de guerra Ironfang até o velho posto avançado da fronteira. Se a forja de lá puder ser reacendida, o clã tem futuro.",
+    "m1.obj.locate": "Localize o posto avançado em ruínas",
+    "m1.obj.gather": "Colete ferro para reativar a Forja de Guerra",
+    "m1.obj.produce": "Produza dois Orcs Guerreiros",
+    "m1.obj.scouts": "Derrote os batedores Bloodmaw",
+    "m1.obj.protect": "Proteja os operários sobreviventes",
+    "m1.obj.no_loss": "Não perca nenhum operário",
+    "m1.dlg.intro": "O posto avançado deve ficar a nordeste daqui. Mantenha os goblins perto - as Terras de Cinza não estão vazias.",
+    "m1.dlg.found": "As muralhas ainda estão de pé, capitão! A forja está fria, mas me dê ferro e eu a desperto.",
+    "m1.dlg.forge": "Ela respira de novo! A Forja de Guerra pode forjar guerreiros. Selecione-a e ponha o ferro para trabalhar.",
+    "m1.dlg.scouts": "Batedores Bloodmaw, vindos do nordeste! Às armas - e mantenha os operários atrás das muralhas.",
+    "m1.victory": "Os batedores estão mortos e a forja queima. Brasas, mas brasas bastam para começar um incêndio.",
+    "m1.defeat": "O posto avançado silenciou. As brasas de Ironfang se apagaram aqui.",
+
+    // ---- Missão 2 ----
+    "m2.brief": "Três minas Ironfang estão nas mãos do Bloodmaw, guardadas por pequenas guarnições e um posto avançado. Retome as minas, defenda a região contra os saques e depois queime o posto. Arqueiros agora podem ser forjados na Forja.",
+    "m2.obj.capture": "Limpe os três depósitos de ferro ocupados",
+    "m2.obj.control": "Mantenha o controle da região das minas",
+    "m2.obj.outpost": "Destrua o posto avançado Bloodmaw",
+    "m2.obj.fast": "Termine em até 15 minutos",
+    "m2.obj.workers": "Mantenha vivos ao menos dois dos seus operários originais",
+    "m2.dlg.intro": "Tomaram nossas minas e deixaram um punhado de guardas em cada uma. Vamos lembrá-los de quem é este ferro.",
+    "m2.dlg.captured": "As três minas são nossas de novo. Eles não vão aceitar isso em silêncio - segure o terreno.",
+    "m2.dlg.control": "A região é nossa. Agora o posto avançado - não deixe nada para onde eles possam voltar.",
+    "m2.msg.mine_taken": "Depósito de ferro livre dos guardas Bloodmaw",
+    "m2.msg.raid": "Um grupo de saque Bloodmaw vem atrás da sua fortaleza!",
+    "m2.victory": "O posto avançado queima e as minas voltam a soar com as picaretas Ironfang.",
+    "m2.defeat": "A Fortaleza do Clã caiu. As minas continuam roubadas.",
+
+    // ---- Missão 3 ----
+    "m3.brief": "A notícia das minas retomadas chegou ao Bloodmaw. Sua horda marcha contra a Forja de Guerra, a única coisa que mantém os Ironfang armados. Fortifique antes da primeira onda, resista a cada assalto e derrube o líder deles quando aparecer. A vitória aqui desbloqueia o modo Sobrevivência.",
+    "m3.obj.prepare": "Prepare suas defesas antes da primeira onda",
+    "m3.obj.protect": "Proteja a Forja de Guerra",
+    "m3.obj.survive": "Sobreviva às ondas inimigas",
+    "m3.obj.leader": "Derrote o líder do assalto",
+    "m3.obj.foundry_hp": "Mantenha a Forja acima de metade da vida",
+    "m3.obj.few_losses": "Não perca mais de cinco unidades",
+    "m3.dlg.intro": "Eles vêm atrás da forja. Operários ao ferro, guerreiros às rochas ao norte da Forja. Arqueiros atrás deles.",
+    "m3.dlg.leader": "Ali - o do martelo. É o líder deles. Derrube-o e o resto vai debandar.",
+    "m3.msg.wave": "Uma onda Bloodmaw marcha contra a Forja!",
+    "m3.msg.wave_held": "Onda contida",
+    "m3.msg.flank_west": "Saqueadores Bloodmaw pelo oeste!",
+    "m3.msg.flank_east": "Saqueadores Bloodmaw pelo leste!",
+    "m3.victory": "O líder do assalto jaz nas cinzas e a Forja ainda queima. Os Ironfang sabem segurar terreno - e os clãs vão ouvir sobre isso.",
+    "m3.defeat": "A Forja de Guerra é entulho. Sem ela não há exército para reconstruir."
 }

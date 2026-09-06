@@ -191,3 +191,20 @@ compare with the previous milestone → fix regressions → report → separate 
 * Placeholders documented in `docs/asset-requests.md` (illustrations, portraits, new models).
 * Limitations: Survival/Codex are visible but disabled with an explanation; campaign missions
   are listed but unauthored until M3; flash messages inside the controller stay English until M7.
+
+### M3 — Tutorial and Missions 1–3 (2026-09-06)
+
+* `missions/m1_embers.js` (tutorial, 48 m map, ruined outpost with a disabled Foundry, scripted
+  Bloodmaw scouts, no enemy commander), `missions/m2_stolen_mine.js` (First Siege terrain, three
+  garrisoned mines cleared by region triggers, 2-minute hold, Bloodmaw Outpost placeholder that
+  raids), `missions/m3_hold.js` (150 s countdown, waves on the Foundry, west/east flank groups,
+  ogre assault leader after wave 5; unlocks Survival).
+* `scripts/Tutorial.js` + HUD tutorial panel/highlights/world ring; events `cameraMoved`,
+  `orderIssued`, `resourceDeposited`, `productionQueued`, `waveCompleted`, `missionEnded`.
+* Objectives: `timer` / `produced` / `unitCount <=` progress, `delta` counters, `internal`
+  helpers, `completeOnVictory` resolution (entity hp, units lost, time), medal criteria per
+  mission, `productionEnabled` / `hpFraction` entity flags, `enemyProducer` buildings.
+* Placeholders: Bloodmaw Outpost and Watchtower are tinted boxes (`docs/asset-requests.md`).
+* Tests: `tests/tst_tutorial.qml` (6 cases) — 24/24 ctest entries green; `--smoke <missionId>`
+  loads each mission on desktop and logs its state.
+* Balance is a first pass; external playtesting is the next gate (brief: stop after Mission 3).

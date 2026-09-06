@@ -14,6 +14,11 @@ Item {
     property int enemyWave: 0
     property real matchTime: 0
     property string title: ""
+    property string tutorialText: ""
+    property string tutorialHighlight: ""
+    property int tutorialIndex: 0
+    property int tutorialTotal: 0
+    signal skipTutorialRequested()
 
     signal produceRequested(var building, string typeId)
     signal cancelProductionRequested(var building)
@@ -65,9 +70,11 @@ Item {
         height: 40
         color: hud.panel
         Row {
+            id: topRow
             anchors { left: parent.left; verticalCenter: parent.verticalCenter; leftMargin: 14 }
             spacing: 22
             Row {
+                id: ironRow
                 spacing: 6
                 Rectangle { width: 14; height: 14; radius: 3; color: "#8d8f96"; anchors.verticalCenter: parent.verticalCenter; border.color: "#c8cbd2" }
                 Text { text: Loc.tr("hud.iron", { n: Math.floor(hud.iron) }); color: hud.ink; font.pixelSize: 16; font.bold: true }
@@ -76,6 +83,7 @@ Item {
             Text { text: hud.fmtTime(hud.matchTime) + (hud.enemyWave ? "   " + Loc.tr("hud.wave", { n: hud.enemyWave }) : ""); color: hud.faint; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
             Text { visible: hud.showFps; text: "FPS " + hud.fps.toFixed(0); color: hud.faint; font.pixelSize: 12; anchors.verticalCenter: parent.verticalCenter }
         }
+        Highlight { key: "hud:iron"; target: ironRow; x: topRow.x + ironRow.x - 6; y: topRow.y + ironRow.y - 4; width: ironRow.width + 12 }
         Text {
             anchors { centerIn: parent }
             text: hud.title.toUpperCase(); color: hud.gold; font.pixelSize: 14; font.bold: true; font.letterSpacing: 3
@@ -95,8 +103,42 @@ Item {
         style: Text.Outline; styleColor: "#000000"
     }
 
+    // ---- tutorial panel (top centre) -----------------------------------------------------------------
+    Rectangle {
+        visible: hud.tutorialText !== ""
+        anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: hud.message !== "" ? 78 : 52 }
+        width: Math.min(hud.width - 40, 620); height: tutCol.implicitHeight + 20; radius: 6
+        color: hud.panel; border.color: hud.gold; border.width: 1
+        Column {
+            id: tutCol
+            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10 }
+            spacing: 6
+            Row {
+                width: parent.width
+                Text { text: Loc.tr("tutorial.step", { n: hud.tutorialIndex + 1, total: hud.tutorialTotal }); color: hud.gold; font.pixelSize: 11; font.bold: true; font.letterSpacing: 1; width: parent.width - 90 }
+                Text {
+                    text: Loc.tr("tutorial.skip"); color: hud.faint; font.pixelSize: 11; width: 90; horizontalAlignment: Text.AlignRight
+                    MouseArea { anchors.fill: parent; anchors.margins: -6; cursorShape: Qt.PointingHandCursor; onClicked: hud.skipTutorialRequested() }
+                }
+            }
+            Text { width: parent.width; text: hud.tutorialText; color: hud.ink; font.pixelSize: 14; wrapMode: Text.WordWrap; lineHeight: 1.25 }
+        }
+    }
+    // pulsing frame around a HUD element; `target` = a sibling (positioner children cannot anchor)
+    component Highlight: Rectangle {
+        property string key: ""
+        property Item target: parent
+        visible: hud.tutorialHighlight === key
+        x: target === parent ? -4 : target.x - 4; y: target === parent ? -4 : target.y - 4
+        width: target.width + 8; height: target.height + 8
+        radius: 8; color: "transparent"; border.color: hud.gold; border.width: 2; z: 5
+        SequentialAnimation on opacity { running: visible; loops: Animation.Infinite; NumberAnimation { from: 0.25; to: 1; duration: 600 } NumberAnimation { from: 1; to: 0.25; duration: 600 } }
+    }
+
     // ---- objectives panel (top-left, under the bar) ---------------------------------------------
+    Highlight { key: "hud:objectives"; target: objCol; visible: hud.tutorialHighlight === key && objCol.visible }
     Column {
+        id: objCol
         visible: hud.objectiveRows.length > 0
         anchors { left: parent.left; top: parent.top; topMargin: 48; leftMargin: 14 }
         spacing: 3
@@ -130,6 +172,7 @@ Item {
         anchors { left: parent.left; bottom: parent.bottom; margins: 10 }
         width: 300; height: 118
         color: hud.panel; radius: 6; border.color: hud.edge
+        Highlight { key: "hud:selection" }
         Row {
             anchors { fill: parent; margins: 10 }
             spacing: 10
@@ -194,6 +237,7 @@ Item {
         anchors { right: parent.right; bottom: parent.bottom; margins: 10 }
         width: 330; height: 118
         color: hud.panel; radius: 6; border.color: hud.edge
+        Highlight { key: "hud:produce" }
         Column {
             anchors { fill: parent; margins: 10 }
             spacing: 6
@@ -238,7 +282,7 @@ Item {
 
     Text {
         visible: !hud.touchMode
-        anchors { right: parent.right; top: parent.top; topMargin: 46; rightMargin: 12 }
+        anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 6 }
         text: Loc.tr("hud.hint_mouse")
         color: "#6f7580"; font.pixelSize: 10
     }

@@ -148,6 +148,8 @@ var strings = {
     "building.rocks_small": "Rocks",
     "building.dead_tree": "Dead Ironwood",
     "building.broken_cart": "Broken Cart",
+    "building.enemy_outpost": "Bloodmaw Outpost",
+    "building.watchtower": "Watchtower",
 
     // ---- campaign missions ----
     "mission.m1.title": "Embers of Ironfang",
@@ -172,5 +174,72 @@ var strings = {
     "classic_siege.objective.destroy": "Destroy the Bloodmaw Fortress",
     "classic_siege.wave_warning": "An enemy war party is marching on your fortress!",
     "classic_siege.victory": "The enemy fortress lies in ruins. Ironfang stands.",
-    "classic_siege.defeat": "The Clan Fortress has fallen."
+    "classic_siege.defeat": "The Clan Fortress has fallen.",
+
+    // ---- tutorial ----
+    "tutorial.step": "TUTORIAL {n} / {total}",
+    "tutorial.skip": "Skip tutorial",
+    "tutorial.m1.camera": "Move the camera with W, A, S, D or the arrow keys. Scroll to zoom. On touch, drag with two fingers.",
+    "tutorial.m1.select": "Left-click Rukhar, your captain, to select him. Drag a box to select several units at once.",
+    "tutorial.m1.move": "Right-click on the ground to move the selected units (tap the ground on touch). Head north-east.",
+    "tutorial.m1.locate": "Find the ruined outpost to the north-east. Your scouts remember a fortress and a cold forge there.",
+    "tutorial.m1.gather": "Select your goblin workers and right-click the iron deposit. Goblins are the only units that gather.",
+    "tutorial.m1.deposit": "Loaded goblins walk back to the Clan Fortress and deposit on their own. Your iron shows at the top left.",
+    "tutorial.m1.forge": "Gather 100 iron. The foreman will use it to relight the War Foundry.",
+    "tutorial.m1.produce": "Select the War Foundry and queue an Orc Warrior. Units gather at the building's rally point.",
+    "tutorial.m1.attack": "Select your warriors and right-click an enemy to attack. Warriors also fight back on their own when attacked.",
+    "tutorial.m1.finish": "Defeat the Bloodmaw scouts. Keep your goblins away from the fight.",
+
+    // ---- speakers ----
+    "speaker.rukhar": "Rukhar",
+    "speaker.foreman": "Foreman Grizzle",
+    "speaker.gorvak": "Gorvak",
+    "speaker.bloodmaw": "Bloodmaw commander",
+
+    // ---- Mission 1 ----
+    "m1.brief": "The clans are scattered and the Iron Crown lies in pieces. Rukhar leads what is left of the Ironfang warband towards the old frontier outpost. If the forge there can be relit, the clan has a future.",
+    "m1.obj.locate": "Locate the ruined outpost",
+    "m1.obj.gather": "Gather iron to reactivate the War Foundry",
+    "m1.obj.produce": "Produce two Orc Warriors",
+    "m1.obj.scouts": "Defeat the Bloodmaw scouts",
+    "m1.obj.protect": "Protect the surviving workers",
+    "m1.obj.no_loss": "Lose no workers",
+    "m1.dlg.intro": "The outpost should be north-east of here. Keep the goblins close - the Ashlands are not empty.",
+    "m1.dlg.found": "The walls still stand, captain! The forge is cold, but give me iron and I will wake it.",
+    "m1.dlg.forge": "She breathes again! The War Foundry can forge warriors. Select it and put the iron to work.",
+    "m1.dlg.scouts": "Bloodmaw scouts, from the north-east! To arms - and keep the workers behind the walls.",
+    "m1.victory": "The scouts are dead and the forge burns. Embers, but embers are enough to start a fire.",
+    "m1.defeat": "The outpost has fallen silent. The Ironfang embers went out here.",
+
+    // ---- Mission 2 ----
+    "m2.brief": "Three Ironfang mines lie in Bloodmaw hands, guarded by small garrisons and a forward outpost. Take the mines back, hold the region against the raids, then burn the outpost. Archers can now be forged at the Foundry.",
+    "m2.obj.capture": "Clear the three occupied iron deposits",
+    "m2.obj.control": "Hold the mining region",
+    "m2.obj.outpost": "Destroy the Bloodmaw outpost",
+    "m2.obj.fast": "Finish within 15 minutes",
+    "m2.obj.workers": "Keep at least two of your original workers alive",
+    "m2.dlg.intro": "They took our mines and left a handful of guards on each. Let us remind them whose iron this is.",
+    "m2.dlg.captured": "All three mines are ours again. They will not take that quietly - hold the ground.",
+    "m2.dlg.control": "The region is ours. Now the outpost - leave nothing for them to come back to.",
+    "m2.msg.mine_taken": "Iron deposit cleared of Bloodmaw guards",
+    "m2.msg.raid": "A Bloodmaw raiding party is coming for your fortress!",
+    "m2.victory": "The outpost burns and the mines ring with Ironfang picks again.",
+    "m2.defeat": "The Clan Fortress has fallen. The mines stay stolen.",
+
+    // ---- Mission 3 ----
+    "m3.brief": "Word of the retaken mines has reached the Bloodmaw. Their war host marches on the War Foundry, the only thing that keeps the Ironfang armed. Fortify before the first wave, hold against every assault, and break their leader when he shows himself. Victory here will unlock Survival mode.",
+    "m3.obj.prepare": "Prepare your defences before the first wave",
+    "m3.obj.protect": "Protect the War Foundry",
+    "m3.obj.survive": "Survive the enemy waves",
+    "m3.obj.leader": "Defeat the assault leader",
+    "m3.obj.foundry_hp": "Keep the Foundry above half health",
+    "m3.obj.few_losses": "Lose no more than five units",
+    "m3.dlg.intro": "They are coming for the forge. Workers to the iron, warriors to the rocks north of the Foundry. Archers behind them.",
+    "m3.dlg.leader": "There - the one with the hammer. Their leader. Bring him down and the rest will break.",
+    "m3.msg.wave": "A Bloodmaw wave marches on the Foundry!",
+    "m3.msg.wave_held": "Wave held",
+    "m3.msg.flank_west": "Bloodmaw raiders from the west!",
+    "m3.msg.flank_east": "Bloodmaw raiders from the east!",
+    "m3.victory": "The assault leader lies in the ash and the Foundry still burns. The Ironfang can hold ground - and the clans will hear of it.",
+    "m3.defeat": "The War Foundry is rubble. Without it there is no army to rebuild."
 }
