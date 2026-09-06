@@ -5,7 +5,7 @@
 #   scripts/refresh-runtime.sh --no-rig   # skip re-rigging (use the rigged GLBs as they are)
 #
 # * units whose exported GLB is newer than their rigged GLB are re-rigged (scripts/rig-unit.sh);
-#   Goblin and Orc Archer are hand-adjusted and are never re-rigged automatically
+#   Goblin, Orc Archer and Orc are hand-adjusted and are never re-rigged automatically
 # * every runtime folder is re-imported with balsam (scripts/import-runtime.py)
 # * app/config/assetmeta.js, footOffset values and docs/asset-manifest.md are regenerated
 set -uo pipefail
@@ -17,7 +17,7 @@ RIG=1; [ "${1:-}" = "--no-rig" ] && RIG=0
 ASSETS=(
   "Goblin:goblin:Goblin:manual"
   "Orc Archer:orc_archer:OrcArcher:manual"
-  "Orc:orc:Orc:rig"
+  "Orc:orc:Orc:manual"
   "Ogre:ogre:Ogre:rig"
   "Clan Fortress:clan_fortress:ClanFortress:static"
   "War Foundry:war_foundry:WarFoundry:static"
