@@ -11,22 +11,22 @@
 var units = {
     goblin_worker: {
         displayName: "Goblin Worker", model: "assets/runtime/goblin/Goblin.qml", status: "qtmesheditor",
-        scale: 1.35, footOffset: 0.39, yawOffset: 0, portrait: "#7fa64a",
+        scale: 1.35, footOffset: 0.39, yawOffset: 180, portrait: "#7fa64a",
         clips: { idle: "Idle", walk: "Walk", attack: "Attack", hit: "Hit", death: "Death", gather: "Gather" }
     },
     orc_warrior: {
         displayName: "Orc Warrior", model: "assets/runtime/orc/Orc.qml", status: "qtmesheditor",
-        scale: 1.8, footOffset: 0.50, yawOffset: 0, portrait: "#5b7a3a",
+        scale: 1.8, footOffset: 0.50, yawOffset: 180, portrait: "#5b7a3a",
         clips: { idle: "Idle", walk: "Walk", attack: "Attack", hit: "Hit", death: "Death" }
     },
     orc_archer: {
         displayName: "Orc Archer", model: "assets/runtime/orc_archer/OrcArcher.qml", status: "qtmesheditor",
-        scale: 1.75, footOffset: 0.51, yawOffset: 0, portrait: "#6b8a4a",
+        scale: 1.75, footOffset: 0.51, yawOffset: 180, portrait: "#6b8a4a",
         clips: { idle: "Idle", walk: "Walk", attack: "Attack", hit: "Hit", death: "Death" }
     },
     ironhide_ogre: {
         displayName: "Ironhide Ogre", model: "assets/runtime/ogre/Ogre.qml", status: "qtmesheditor",
-        scale: 2.7, footOffset: 0.43, yawOffset: 0, portrait: "#8a6a4a",
+        scale: 2.7, footOffset: 0.43, yawOffset: 180, portrait: "#8a6a4a",
         clips: { idle: "Idle", walk: "Walk", attack: "Attack", hit: "Hit", death: "Death" }
     },
     placeholder: {
