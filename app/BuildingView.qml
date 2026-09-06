@@ -11,6 +11,8 @@ Node {
 
     property int entityId: -1
     property string typeId: "clan_fortress"
+    property string tag: ""                  // mission tag, "" for anonymous entities
+    property bool productionEnabled: true    // triggers can disable a producer (tutorial)
     property var typeDef: ({})               // Assets.buildings entry
     property var stats: ({})                 // Balance.buildings entry
     readonly property bool isBuilding: true

@@ -6,7 +6,8 @@ Item {
     property var game: null                  // IronfangGame
     property var selection: []
     property real iron: 0
-    property string objective: ""
+    property string objective: ""            // active primary objective (one line, top bar)
+    property var objectiveRows: []           // all visible objectives: {text, state, optional, current, target, showCount}
     property string message: ""
     property real fps: 0
     property bool showFps: false
@@ -91,6 +92,34 @@ Item {
         visible: hud.message !== ""
         text: hud.message; color: hud.gold; font.pixelSize: 14
         style: Text.Outline; styleColor: "#000000"
+    }
+
+    // ---- objectives panel (top-left, under the bar) ---------------------------------------------
+    Column {
+        visible: hud.objectiveRows.length > 0
+        anchors { left: parent.left; top: parent.top; topMargin: 48; leftMargin: 14 }
+        spacing: 3
+        Repeater {
+            model: hud.objectiveRows
+            Row {
+                required property var modelData
+                spacing: 6
+                Text {
+                    text: modelData.state === "complete" ? "✓" : modelData.state === "failed" ? "✗" : "◦"
+                    color: modelData.state === "complete" ? "#5fae3c" : modelData.state === "failed" ? "#c9432e" : hud.gold
+                    font.pixelSize: 12; font.bold: true; width: 12
+                    style: Text.Outline; styleColor: "#000000"
+                }
+                Text {
+                    text: (modelData.optional ? "Optional: " : "") + modelData.text
+                          + (modelData.showCount ? "  " + modelData.current + " / " + modelData.target : "")
+                    color: modelData.state === "active" ? (modelData.optional ? hud.faint : hud.ink) : "#8b9096"
+                    font.pixelSize: 12
+                    font.strikeout: modelData.state === "failed"
+                    style: Text.Outline; styleColor: "#000000"
+                }
+            }
+        }
     }
 
     // ---- selection panel --------------------------------------------------------------------
@@ -178,7 +207,7 @@ Item {
                         required property string modelData
                         label: hud.game ? hud.game.unitName(modelData) : modelData
                         sub: hud.game ? hud.game.unitCost(modelData) + " iron · " + hud.game.unitBuildTime(modelData) + "s" : ""
-                        usable: hud.game ? hud.iron >= hud.game.unitCost(modelData) : false
+                        usable: hud.game ? hud.iron >= hud.game.unitCost(modelData) && hud.primary.productionEnabled !== false : false
                         onClicked: hud.produceRequested(hud.primary, modelData)
                     }
                 }

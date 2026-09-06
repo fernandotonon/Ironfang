@@ -10,6 +10,13 @@ is called done. Items marked *(M1+)* are not exercised by the Milestone 0 spike 
 - [ ] Browser refresh: reload → scene comes back, state reset, no stale-cache errors.
 - [ ] Browser focus loss: switch tab for 30 s, come back → units still where they were / arrive normally, FPS recovers, no runaway catch-up.
 
+## Mission (Milestone 1)
+- [ ] Title → Start Match: the top bar shows "Destroy the Enemy Fortress (2500 HP)" and the objectives panel (top-left) lists it with an open marker; the HP figure follows damage.
+- [ ] The intro message ("Send your goblins to the iron…") appears once at start; the wave warning appears (and the horn plays on desktop) on every enemy wave.
+- [ ] Destroying the Enemy Fortress ticks the objective and shows the victory overlay with the mission's victory text; losing the Clan Fortress shows the defeat text.
+- [ ] Play Again / Restart rebuilds the same mission: 19 buildings, 7 units, 150 iron, intro message again, objective open again.
+- [ ] Easy / Normal / Hard still change wave growth and interval (enemy income), nothing else.
+
 ## Camera
 - [ ] W/A/S/D and arrow keys pan; speed feels constant when zoomed in vs out.
 - [ ] Mouse wheel zooms toward the cursor; cannot pass through the ground; zoom-out stops at the map scale.

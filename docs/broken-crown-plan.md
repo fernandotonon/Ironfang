@@ -144,3 +144,27 @@ compare with the previous milestone → fix regressions → report → separate 
   (team ring colour, selection filters use `team === "player"`) — planned for M4/M5, not M1.
 * **Unit limits**: keep ≤ 40 simultaneous units on wasm unless profiling shows headroom.
 * **Clayground upstream**: Web Runtime PR #215 pending; none of this plan depends on it.
+
+## 9. Milestone log
+
+### M1 — Mission foundation (2026-09-06)
+
+* `app/missions/classic_siege.js`: the MVP level as a mission (entities, camera, iron, enemy
+  commander, one primary objective with HP progress, four triggers: intro, fortress down,
+  home lost, repeating wave warning, outcome texts). `config/level.js` removed.
+* `scripts/Mission.js` (validate / load / difficulty merge / defaults / enemy config),
+  `scripts/Objectives.js` (hidden → active → complete | failed, declarative progress, events),
+  `scripts/Triggers.js` (event + polled conditions, once/repeat, delay, requires, unknown
+  actions reported not thrown).
+* `IronfangGame.qml`: `startMatch(difficulty, definition)`, `buildLevel` from the entity list,
+  `gameEvent()` stream, `stepMission()`, action table, enemy producer/target from tags,
+  `checkEnd` replaced by the objective rule; new counters `unitsProduced`, `buildingsLost`,
+  `buildingsDestroyed`. `UnitView`/`BuildingView` gained `tag`, buildings `productionEnabled`.
+* HUD: primary objective line from the mission, objectives panel (top-left) with state markers.
+* Tests: `tests/tst_mission.qml` (12 cases) — 23/23 ctest entries green.
+* Verified: desktop autotest identical in shape to the pre-M1 run (19 buildings, 7 units, 150
+  iron, wave 1 at ~2 min, restart OK, 120 FPS); wasm build served over HTTP runs the same
+  autotest at 56–60 FPS, 22.7 MB transferred, no console errors.
+* Known limitations: `revealArea`, `unlockAbility`, `activateCheckpoint` are accepted no-ops
+  until M4/M5; `showDialogue` is a HUD flash until the campaign shell; difficulty names remain
+  easy/normal/hard until M2; texts are still literal English (localisation keys in M2).

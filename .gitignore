@@ -12,3 +12,5 @@ assets/qtmesh-projects/logs/
 /web-runtime/*.wasm
 /web-runtime/*.js
 /.regen-backup/
+autotest-*.png
+ironfang-shot-*.png

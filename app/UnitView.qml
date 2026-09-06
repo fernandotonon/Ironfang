@@ -13,6 +13,7 @@ Node {
     property int entityId: -1
     property alias unitId: root.entityId
     property string typeId: "orc_warrior"
+    property string tag: ""                  // mission tag (docs/mission-format.md), "" for anonymous entities
     property var typeDef: ({})               // Assets.units entry
     property var stats: ({})                 // Balance.units entry
     readonly property bool isUnit: true

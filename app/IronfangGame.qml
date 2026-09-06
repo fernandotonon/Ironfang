@@ -18,14 +18,17 @@ import "scripts/EnemyAI.js" as EnemyAI
 import "scripts/Touch.js" as Touch
 import "config/assets.js" as Assets
 import "config/balance.js" as Balance
-import "config/level.js" as Level
+import "scripts/Mission.js" as Mission
+import "scripts/Objectives.js" as Objectives
+import "scripts/Triggers.js" as Triggers
+import "missions/classic_siege.js" as ClassicSiege
 
 Item {
     id: game
     focus: true
 
     // ---- configuration ---------------------------------------------------------------------
-    readonly property real mapSize: Level.layout.size
+    property real mapSize: 64                   // set from mission.map.size in startMatch
     readonly property real navCell: 1.0
     readonly property real simStep: Balance.match.simStep
     property int simSpeed: 1                    // debug: steps per step (keys [ ])
@@ -35,6 +38,17 @@ Item {
     // its app shell + assets-manifest.json).
     property string assetBase: Qt.platform.os === "wasm" ? "file:///game/" : ""
     property string difficulty: "normal"
+
+    // ---- mission ---------------------------------------------------------------------------
+    // The match is built from a declarative mission definition (docs/mission-format.md).
+    // Objectives and triggers drive victory/defeat and the HUD; the controller only feeds events.
+    property var missionDef: ClassicSiege.mission     // definition to load (title screen default)
+    property var mission: null                        // Mission.load() result of the running match
+    property var objectives: null                     // Objectives.create() state
+    property var triggers: null                       // Triggers.create() state
+    property string objectiveText: ""                 // HUD: active primary objective line
+    property var objectiveRows: []                    // HUD: visible objectives (plain rows)
+    property int _objRev: -1
 
     // ---- match state -----------------------------------------------------------------------
     property string phase: "title"              // title | playing | paused | victory | defeat | showcase | credits
@@ -56,6 +70,9 @@ Item {
     property real fps: 0
     property int unitsLost: 0
     property int unitsKilled: 0
+    property int unitsProduced: 0
+    property int buildingsLost: 0
+    property int buildingsDestroyed: 0
 
     // ---- startup ---------------------------------------------------------------------------
     Component.onCompleted: {
@@ -69,26 +86,34 @@ Item {
     }
     Timer { id: quitTimer; interval: 800; onTriggered: Qt.quit() }
 
-    function startMatch(diff) {
+    function startMatch(diff, def) {
         difficulty = diff || "normal"
+        if (def) missionDef = def
+        mission = Mission.load(missionDef, difficulty)
         clearWorld()
+        mapSize = mission.map.size
         Nav.init(mapSize, mapSize, navCell)
         pathfinder.columns = Nav.cols
         pathfinder.rows = Nav.rows
-        economy = Economy.create(Balance.match.startIron)
+        economy = Economy.create(mission.player.iron)
         iron = economy.iron
         matchTime = 0
         tick = 0
-        unitsLost = 0; unitsKilled = 0
+        unitsLost = 0; unitsKilled = 0; unitsProduced = 0; buildingsLost = 0; buildingsDestroyed = 0
         message = ""
+        objectives = Objectives.create(mission.objectives)
+        triggers = Triggers.create(mission.triggers)
+        _objRev = -1
         buildLevel()
         pathfinder.walkableData = Nav.walkableData()
-        enemyAI = EnemyAI.create(Balance.enemy, difficulty)
-        world.rig.applyState({ px: Level.layout.cameraStart.x, py: 0, pz: Level.layout.cameraStart.z,
-                               yaw: 0, pitch: 52, distance: 42 })
+        enemyCfg = mission.enemy ? Mission.enemyConfig(mission) : null
+        enemyAI = enemyCfg ? EnemyAI.create(enemyCfg, difficulty) : null
+        const cam = mission.map.camera
+        world.rig.applyState({ px: cam.x, py: 0, pz: cam.z, yaw: cam.yaw, pitch: cam.pitch, distance: cam.distance })
         phase = "playing"
         audio.startMusic()
-        flash("Send your goblins to the iron. Forge an army. Break the enemy fortress.")
+        refreshObjectives()
+        gameEvent("missionStarted", { id: mission.id })
     }
     onPhaseChanged: {
         if (phase === "paused") audio.pauseMusic()
@@ -107,19 +132,26 @@ Item {
         playerFortress = null; playerFoundry = null; enemyFortress = null
     }
 
+    // Instantiates the mission's entity list. Buildings first (they block navigation cells),
+    // then units. Reserved tags player_fortress / player_foundry / enemy_fortress fill the
+    // convenience properties the HUD, autotest and keyboard shortcuts use.
     function buildLevel() {
-        const L = Level.layout
-        playerFortress = spawnBuilding("clan_fortress", "player", L.player.fortress.x, L.player.fortress.z)
-        playerFortress.rally = L.player.rally
-        playerFoundry = spawnBuilding("war_foundry", "player", L.player.foundry.x, L.player.foundry.z)
-        playerFoundry.rally = L.player.rally
-        for (const d of L.player.deposits) spawnBuilding("iron_deposit", "neutral", d.x, d.z)
-        enemyFortress = spawnBuilding("enemy_fortress", "enemy", L.enemy.fortress.x, L.enemy.fortress.z)
-        enemyFortress.rally = L.enemy.rally
-        for (const d of L.enemy.deposits) spawnBuilding("iron_deposit", "neutral", d.x, d.z)
-        for (const o of L.obstacles) spawnBuilding(o.type, "neutral", o.x, o.z)
-        for (const s of L.player.startUnits) spawnUnit(s.type, "player", s.x, s.z)
-        for (const s of L.enemy.startUnits) spawnUnit(s.type, "enemy", s.x, s.z)
+        for (const e of mission.entities) {
+            if (e.kind !== "building") continue
+            const b = spawnBuilding(e.type, e.team, e.x, e.z, e)
+            if (e.tag === "player_fortress") playerFortress = b
+            else if (e.tag === "player_foundry") playerFoundry = b
+            else if (e.tag === "enemy_fortress") enemyFortress = b
+        }
+        for (const e of mission.entities) if (e.kind === "unit") spawnUnit(e.type, e.team, e.x, e.z, e)
+        if (!playerFortress) playerFortress = buildings.find(b => b.team === "player" && b.stats.dropOff) || null
+    }
+
+    function entityByTag(tag) {
+        if (!tag) return null
+        for (const b of buildings) if (b.tag === tag) return b
+        for (const u of units) if (u.tag === tag) return u
+        return null
     }
 
     // ---- entities --------------------------------------------------------------------------
@@ -136,9 +168,9 @@ Item {
         Projectile { assetBase: game.assetBase; typeDef: Assets.projectiles.arrow }
     }
 
-    function spawnUnit(typeId, team, x, z) {
+    function spawnUnit(typeId, team, x, z, def) {
         const u = unitComp.createObject(world.unitRoot, {
-            entityId: nextEntityId++, typeId: typeId, team: team,
+            entityId: nextEntityId++, typeId: typeId, team: team, tag: (def && def.tag) || "",
             typeDef: Assets.unit(typeId), stats: Balance.units[typeId] || {},
             x: x, z: z, heading: team === "enemy" ? 200 : 20
         })
@@ -147,12 +179,14 @@ Item {
         return u
     }
 
-    function spawnBuilding(typeId, team, x, z) {
+    function spawnBuilding(typeId, team, x, z, def) {
         const stats = Balance.buildings[typeId] || {}
         const b = buildingComp.createObject(world.buildingRoot, {
-            entityId: nextEntityId++, typeId: typeId, team: team,
+            entityId: nextEntityId++, typeId: typeId, team: team, tag: (def && def.tag) || "",
             typeDef: Assets.building(typeId) || {}, stats: stats,
-            x: x, z: z, hp: stats.hp || 0, maxHp: stats.hp || 0, iron: stats.iron || 0,
+            x: x, z: z, hp: stats.hp || 0, maxHp: stats.hp || 0,
+            iron: def && def.iron !== undefined ? def.iron : (stats.iron || 0),
+            rally: def && def.rally ? { x: def.rally.x, z: def.rally.z } : null,
             queue: (stats.produces && stats.produces.length) || typeId === "enemy_fortress" ? Production.createQueue(5) : null
         })
         if (stats.footprint) Nav.blockRect(x - stats.footprint.w / 2, z - stats.footprint.d / 2,
@@ -220,6 +254,7 @@ Item {
         selection = list
         for (const e of selection) e.selected = true
         if (list.length) audio.play("select", 0.6)
+        if (list.length === 1 && triggers) gameEvent("entitySelected", { tag: list[0].tag, entityType: list[0].typeId, team: list[0].team })
     }
 
     function selectAt(sx, sy, additive) {
@@ -380,6 +415,7 @@ Item {
 
     function produce(building, typeId) {
         if (!building || !building.queue) return
+        if (!building.productionEnabled) { flash(building.typeDef.displayName + " is not operational yet"); audio.play("invalid"); return }
         const r = Production.enqueue(building.queue, building.typeId, typeId, economy)
         iron = economy.iron
         if (!r.ok) { flash(r.reason); audio.play("invalid") } else audio.play("select", 0.5)
@@ -445,7 +481,83 @@ Item {
         for (const e of units) if (e.hitFlash > 0) e.hitFlash = Math.max(0, e.hitFlash - dt * 3)
         for (const e of buildings) if (e.hitFlash > 0) e.hitFlash = Math.max(0, e.hitFlash - dt * 3)
         iron = economy.iron
-        checkEnd()
+        stepMission(dt)
+    }
+
+    // ---- mission logic: events -> triggers -> actions; objectives -> victory --------------------
+    readonly property var missionQuery: ({
+        entityByTag: (tag) => game.entityByTag(tag),
+        countUnits: (team, type) => game.units.filter(u => u.alive && u.team === team && (!type || u.typeId === type)).length,
+        units: (team, type) => game.units.filter(u => u.alive && (!team || u.team === team) && (!type || u.typeId === type)),
+        iron: () => game.economy.iron
+    })
+    readonly property var triggerContext: ({
+        query: missionQuery,
+        objectiveComplete: (id) => { const o = game.objectives && Objectives.get(game.objectives, id); return !!o && o.state === "complete" },
+        actions: {
+            message:           (a) => flash(a.text),
+            showDialogue:      (a) => flash((a.speaker ? a.speaker + ": " : "") + a.text),   // dialogue UI arrives with the campaign shell
+            playAudio:         (a) => audio.play(a.sound, a.volume === undefined ? 1 : a.volume),
+            completeObjective: (a) => Objectives.complete(objectives, a.id, matchTime),
+            failObjective:     (a) => Objectives.fail(objectives, a.id, matchTime),
+            addObjective:      (a) => Objectives.add(objectives, a),
+            progressObjective: (a) => Objectives.setProgress(objectives, a.id, a.current, a.target, matchTime),
+            addResources:      (a) => { Economy.deposit(economy, a.amount); iron = economy.iron },
+            spawnUnits:        (a) => spawnGroup(a),
+            startWave:         (a) => { if (enemyAI) enemyAI.nextWaveAt = matchTime },
+            endMission:        (a) => endMatch(a.result),
+            revealArea:        (a) => {},                       // no fog of war yet (documented no-op)
+            enableProduction:  (a) => setProductionEnabled(a.tag, a.enabled !== false),
+            unlockAbility:     (a) => console.log("unlockAbility: abilities arrive in milestone 4"),
+            activateCheckpoint:(a) => console.log("activateCheckpoint: checkpoints arrive in milestone 5")
+        }
+    })
+
+    function gameEvent(type, payload) {
+        if (!triggers) return
+        const ev = Object.assign({ type: type, time: matchTime }, payload || {})
+        Triggers.handle(triggers, ev, triggerContext)
+        pumpObjectiveEvents()
+    }
+
+    // objective state changes are game events too (triggers can chain on them)
+    function pumpObjectiveEvents() {
+        if (!objectives) return
+        let guard = 0
+        while (objectives.events.length && guard++ < 20) {
+            const evs = Objectives.drain(objectives)
+            for (const e of evs) if (e.type === "objectiveCompleted" || e.type === "objectiveFailed") Triggers.handle(triggers, Object.assign({ time: matchTime }, e), triggerContext)
+        }
+    }
+
+    function stepMission(dt) {
+        if (!triggers || !objectives) return
+        Triggers.step(triggers, dt, triggerContext)
+        Objectives.step(objectives, missionQuery, matchTime)
+        pumpObjectiveEvents()
+        if (objectives.rev !== _objRev) refreshObjectives()
+        if (phase === "playing" && mission.victory.auto && Objectives.allPrimaryComplete(objectives)) endMatch("victory")
+        else if (phase === "playing" && Objectives.anyPrimaryFailed(objectives)) endMatch("defeat")
+    }
+
+    function refreshObjectives() {
+        _objRev = objectives.rev
+        objectiveText = Objectives.primaryText(objectives)
+        objectiveRows = Objectives.visible(objectives).map(o => ({ id: o.id, text: o.text, state: o.state, optional: o.optional,
+                                                                   current: o.current, target: o.target, showCount: !!(o.target > 0 && !(o.progress && o.progress.type === "entityHp")) }))
+    }
+
+    function spawnGroup(a) {
+        const target = entityByTag(a.attack)
+        for (const s of a.units) {
+            const u = spawnUnit(s.type, s.team || a.team || "enemy", s.x !== undefined ? s.x : a.x, s.z !== undefined ? s.z : a.z, s)
+            if (target && u.team !== target.team) { u.inWave = u.team === "enemy"; u.order = "attackMove"; u.primaryTarget = target; u.target = target; u.repathTimer = 0 }
+        }
+    }
+
+    function setProductionEnabled(tag, on) {
+        const b = entityByTag(tag)
+        if (b && b.isBuilding) b.productionEnabled = on
     }
 
     // workers
@@ -547,9 +659,11 @@ Item {
         } else {
             target.hitFlash = 1
             audio.play("building_destroyed")
-            if (target.team === "player") flash(target.typeDef.displayName + " destroyed!")
-            else flash("Enemy " + target.typeDef.displayName + " destroyed!")
+            if (target.team === "player") { buildingsLost++; flash(target.typeDef.displayName + " destroyed!") }
+            else { buildingsDestroyed++; flash("Enemy " + target.typeDef.displayName + " destroyed!") }
         }
+        gameEvent("entityDestroyed", { tag: target.tag, entityType: target.typeId, team: target.team, isUnit: target.isUnit === true,
+                                       byTeam: attacker ? attacker.team : "", byType: attacker ? attacker.typeId : "" })
     }
 
     function fireProjectile(shooter, target) {
@@ -600,43 +714,46 @@ Item {
                         const d = spots[Math.floor(Math.random() * spots.length)]
                         u.order = "move"; u.moveTo(d)
                     }
+                    unitsProduced++
                     flash(unitName(done) + " ready"); audio.play("produced")
                 } else if (b.rally) {
                     const spots = Nav.distribute(b.rally.x, b.rally.z, 8, 1.4)
                     u.moveTo(spots[Math.floor(Math.random() * spots.length)])
                 }
+                gameEvent("unitProduced", { unitType: done, team: b.team, tag: b.tag })
             }
         }
     }
 
     // enemy
+    // Producer and wave target come from the mission (enemy.producer / enemy.target tags).
+    function enemyProducer() { const b = mission && mission.enemy ? entityByTag(mission.enemy.producer) : null; return b && b.alive && b.queue ? b : null }
+    function enemyTarget() { const b = mission && mission.enemy ? entityByTag(mission.enemy.target) : null; return b && b.alive ? b : null }
     readonly property var enemyWorld: ({
         get time() { return game.matchTime },
         get enemyUnits() { return game.units.filter(u => u.alive && u.team === "enemy" && !u.inWave && u.order !== "attack") },
-        get playerFortress() { return game.playerFortress && game.playerFortress.alive ? game.playerFortress : null },
-        canProduce: (t) => game.enemyFortress && game.enemyFortress.alive && game.enemyFortress.queue.items.length === 0,
-        produce: (t) => { game.enemyFortress.queue.items.push(t) },
+        get playerFortress() { return game.enemyTarget() },
+        canProduce: (t) => { const p = game.enemyProducer(); return !!p && p.queue.items.length === 0 },
+        produce: (t) => { game.enemyProducer().queue.items.push(t) },
         launchWave: (list, target) => {
             for (const u of list) { u.inWave = true; u.order = "attackMove"; u.primaryTarget = target; u.target = target; u.repathTimer = 0 }
-            game.flash("An enemy war party is marching on your fortress!")
-            audio.play("wave_incoming")
+            game.gameEvent("waveLaunched", { size: list.length, wave: game.enemyAI.wavesLaunched + 1 })
         }
     })
+    property var enemyCfg: null
     function stepEnemy(dt) {
-        if (!enemyAI || !enemyFortress || !enemyFortress.alive) return
-        EnemyAI.step(enemyAI, dt, Balance.enemy, enemyWorld)
-        // idle wave units that lost their target head for the fortress again
-        for (const u of units) if (u.alive && u.team === "enemy" && u.inWave && !u.target && playerFortress && playerFortress.alive) {
-            u.order = "attackMove"; u.primaryTarget = playerFortress; u.target = playerFortress
+        if (!enemyAI || !enemyProducer()) return
+        if (!enemyCfg) enemyCfg = Mission.enemyConfig(mission)
+        EnemyAI.step(enemyAI, dt, enemyCfg, enemyWorld)
+        // idle wave units that lost their target head for the wave target again
+        const target = enemyTarget()
+        for (const u of units) if (u.alive && u.team === "enemy" && u.inWave && !u.target && target) {
+            u.order = "attackMove"; u.primaryTarget = target; u.target = target
         }
     }
 
-    function checkEnd() {
-        if (phase !== "playing") return
-        if (enemyFortress && !enemyFortress.alive) endMatch("victory")
-        else if (playerFortress && !playerFortress.alive) endMatch("defeat")
-    }
     function endMatch(result) {
+        if (phase !== "playing") return
         phase = result
         setSelection([])
         audio.play(result === "victory" ? "victory" : "defeat")
@@ -798,9 +915,8 @@ Item {
         fps: game.fps
         matchTime: game.matchTime
         enemyWave: game.enemyAI ? (void game.tick, game.enemyAI.wavesLaunched) : 0
-        objective: game.enemyFortress && game.enemyFortress.alive
-                   ? "Objective: destroy the Enemy Fortress (" + Math.ceil(game.enemyFortress.hp) + " HP)"
-                   : ""
+        objective: game.objectiveText
+        objectiveRows: game.objectiveRows
         onProduceRequested: (b, t) => game.produce(b, t)
         onCancelProductionRequested: (b) => game.cancelProduction(b)
         touchMode: game.touchMode
@@ -819,8 +935,8 @@ Item {
         mode: game.phase === "title" ? "title" : game.phase === "paused" ? "paused"
             : game.phase === "victory" ? "victory" : game.phase === "defeat" ? "defeat"
             : game.phase === "credits" ? "credits" : ""
-        subtitle: game.phase === "victory" ? "The enemy fortress lies in ruins. Ironfang stands."
-                : game.phase === "defeat" ? "The Clan Fortress has fallen." : ""
+        subtitle: game.mission && game.phase === "victory" ? game.mission.outcome.victory
+                : game.mission && game.phase === "defeat" ? game.mission.outcome.defeat : ""
         stats: (game.phase === "victory" || game.phase === "defeat")
                ? "Match time " + Math.floor(game.matchTime / 60) + ":" + ("0" + Math.floor(game.matchTime % 60)).slice(-2)
                  + "   ·   iron gathered " + Math.floor(game.economy.gathered)

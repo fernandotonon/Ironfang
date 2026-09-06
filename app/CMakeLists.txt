@@ -54,9 +54,12 @@ clay_app(ironfang
         scripts/Gather.js
         scripts/EnemyAI.js
         scripts/Touch.js
+        scripts/Mission.js
+        scripts/Objectives.js
+        scripts/Triggers.js
+        missions/classic_siege.js
         config/assets.js
         config/balance.js
-        config/level.js
         config/assetmeta.js
 
     RES_FILES

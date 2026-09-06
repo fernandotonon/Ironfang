@@ -12,14 +12,40 @@ web-runtime/Main.qml (Item)               Clayground Web Runtime entry (no build
         │    ├── BuildingView.qml ×N      fortress / foundry / deposits / obstacles
         │    ├── UnitView.qml ×N          workers, warriors, archers, ogres (both teams)
         │    └── Projectile.qml ×N        archer arrows
-        ├── Hud.qml                       iron, objective, selection panel, production
+        ├── Hud.qml                       iron, objectives, selection panel, production
         ├── MenuOverlay.qml               title / pause / victory / defeat, difficulty
         └── PerfHud (Clayground)          render stats (F)
 scripts/                                   rules, pure JS (.pragma library), unit-tested
    NavGrid.js  Steering.js  Economy.js  Production.js  Combat.js  Gather.js  EnemyAI.js
+   Mission.js  Objectives.js  Triggers.js  (mission foundation, docs/mission-format.md)
 config/                                    data
-   balance.js  level.js  assets.js
+   balance.js  assets.js
+missions/                                  declarative mission definitions
+   classic_siege.js                        the original First Siege match
 ```
+
+## Missions, objectives, triggers
+
+The controller never hard-codes a level. `startMatch(difficulty, definition)` runs
+`Mission.load()` (validation, difficulty merge, defaults), instantiates `mission.entities`
+(buildings first so they block navigation cells, then units; tagged entities fill
+`playerFortress` / `playerFoundry` / `enemyFortress`), creates the `Objectives` and `Triggers`
+state and emits `missionStarted`.
+
+From then on the controller only **emits events** — `gameEvent(type, payload)` for
+`entityDestroyed`, `unitProduced`, `entitySelected`, `waveLaunched`, and objective changes —
+and **steps** the two managers once per simulation step (`stepMission`): polled trigger
+conditions (timers, resources, unit counts, regions), declarative objective progress, then the
+end-of-mission rule (all primary objectives complete → victory, a failed primary → defeat).
+Trigger actions are a small table on the controller (`triggerContext.actions`): message, audio,
+objective operations, spawn, start wave, add resources, enable production, end mission.
+
+The enemy commander (`EnemyAI.js`) is unchanged; its producer and wave target now come from the
+mission (`enemy.producer` / `enemy.target` tags) and its numbers from `Balance.enemy` merged with
+`mission.enemy.waves`.
+
+The HUD binds to `objectiveText` (active primary objective line) and `objectiveRows` (all visible
+objectives with state and progress), refreshed when the objective state's `rev` changes.
 
 ## Simulation vs presentation
 
@@ -66,8 +92,15 @@ from Clayground's `GridPathfinder` (A*, diagonal) and are followed by `Steering.
 
 `EnemyAI.js` is a small state loop with passive income (documented in `balance.js`): buy units
 in rotation → count the garrison → when the wave timer fires, send everything above the garrison
-minimum as an attack-move on the player fortress → schedule the next, larger wave.
+minimum as an attack-move on the mission's wave target → schedule the next, larger wave.
 It is exercised in `tests/tst_rules.qml` with a stub world.
+
+## Tests
+
+`tests/tst_navgrid.qml` (grid, paths, distribution), `tests/tst_rules.qml` (economy,
+production, combat, gather, enemy AI, touch), `tests/tst_mission.qml` (mission loader and
+validation, difficulty merge, objectives, one-shot/repeat/polled/delayed/gated triggers, the
+Classic Siege victory/defeat/restart flow). Run with `ctest --test-dir build-desktop`.
 
 ## Web deployment
 
