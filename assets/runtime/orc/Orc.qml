@@ -90,8 +90,8 @@ Node {
 
     // Nodes:
     Node {
-        id: a9
-        objectName: "a9"
+        id: orc_rigged
+        objectName: "Orc_rigged"
         Node {
             id: orc
             objectName: "Orc"
@@ -192,8 +192,8 @@ Node {
             }
         }
         Model {
-            id: a9_mesh
-            objectName: "a9_mesh"
+            id: orc_rigged_mesh
+            objectName: "Orc_rigged_mesh"
             source: "meshes/meshes_0__mesh.mesh"
             pickable: true
             skin: skin
@@ -209,13 +209,13 @@ Node {
         objectName: "Attack"
         property real framesPerSecond: 1000
         startFrame: 0
-        endFrame: 1467
+        endFrame: 3967
         currentFrame: 0
         enabled: node.clip === "Attack"
         animations: TimelineAnimation {
-            duration: 1467
+            duration: 3967
             from: 0
-            to: 1467
+            to: 3967
             running: node.clip === "Attack"
             loops: 1
             // deferred: the handler usually switches `clip`, which drives `running`
@@ -255,6 +255,11 @@ Node {
             target: rightForeArm
             property: "rotation"
             keyframeSource: "animations/rightForeArm_rotation_0.qad"
+        }
+        KeyframeGroup {
+            target: neck
+            property: "rotation"
+            keyframeSource: "animations/neck_rotation_0.qad"
         }
         KeyframeGroup {
             target: rightUpLeg
@@ -312,13 +317,13 @@ Node {
         objectName: "Death"
         property real framesPerSecond: 1000
         startFrame: 0
-        endFrame: 2467
+        endFrame: 2601
         currentFrame: 0
         enabled: node.clip === "Death"
         animations: TimelineAnimation {
-            duration: 2467
+            duration: 2601
             from: 0
-            to: 2467
+            to: 2601
             running: node.clip === "Death"
             loops: 1
             // deferred: the handler usually switches `clip`, which drives `running`
@@ -425,13 +430,13 @@ Node {
         objectName: "Hit"
         property real framesPerSecond: 1000
         startFrame: 0
-        endFrame: 767
+        endFrame: 3967
         currentFrame: 0
         enabled: node.clip === "Hit"
         animations: TimelineAnimation {
-            duration: 767
+            duration: 3967
             from: 0
-            to: 767
+            to: 3967
             running: node.clip === "Hit"
             loops: 1
             // deferred: the handler usually switches `clip`, which drives `running`
@@ -533,13 +538,13 @@ Node {
         objectName: "Idle"
         property real framesPerSecond: 1000
         startFrame: 0
-        endFrame: 2967
+        endFrame: 1834
         currentFrame: 0
         enabled: node.clip === "Idle"
         animations: TimelineAnimation {
-            duration: 2967
+            duration: 1834
             from: 0
-            to: 2967
+            to: 1834
             running: node.clip === "Idle"
             loops: Animation.Infinite
         }
@@ -639,13 +644,13 @@ Node {
         objectName: "Walk"
         property real framesPerSecond: 1000
         startFrame: 0
-        endFrame: 967
+        endFrame: 1200
         currentFrame: 0
         enabled: node.clip === "Walk"
         animations: TimelineAnimation {
-            duration: 967
+            duration: 1200
             from: 0
-            to: 967
+            to: 1200
             running: node.clip === "Walk"
             loops: Animation.Infinite
         }
