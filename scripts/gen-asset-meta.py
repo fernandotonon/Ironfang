@@ -23,6 +23,9 @@ RUNTIME = {  # runtime folder -> (exported name, rigged glb or None)
     "iron_deposit": ("Iron Deposit", None), "large_rocks": ("Large Rocks", None),
     "small_rocks": ("Small Rocks", None), "dead_tree": ("Dead Ironwood tree", None),
     "broken_cart": ("Broken Cart", None), "arrow": ("Arrow", None),
+    "bloodmaw_outpost": ("Bloodmaw Outpost", None), "bloodmaw_fortress": ("Bloodmaw Fortress", None),
+    "watchtower": ("Watchtower", None), "gate": ("Bloodmaw Gate", None), "prisoner_cage": ("Prisoner Cage", None),
+    "steam_vent": ("Steam Vent", None), "ruined_foundry": ("Ruined Foundry", None), "iron_crown": ("Iron Crown", None),
 }
 
 

@@ -246,5 +246,149 @@ var assets = {
     "clips": [],
     "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
     "status": "QtMeshEditor-generated"
+  },
+  "bloodmaw_outpost": {
+    "verts": 15533,
+    "tris": 9940,
+    "skeleton": "",
+    "bones": 0,
+    "name": "Bloodmaw Outpost",
+    "source": "assets/source-images/Bloodmaw Outpost.png",
+    "exported": "assets/exported/Bloodmaw Outpost/Bloodmaw Outpost.glb",
+    "runtime": "assets/runtime/bloodmaw_outpost/BloodmawOutpost.qml",
+    "textures": [
+      "qtmesh_gen3d_1_1788762287542_diffuse.png",
+      "qtmesh_gen3d_1_1788762287542_normal.png",
+      "qtmesh_gen3d_1_1788762287542_roughness.png"
+    ],
+    "clips": [],
+    "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
+    "status": "QtMeshEditor-generated"
+  },
+  "bloodmaw_fortress": {
+    "verts": 16359,
+    "tris": 9758,
+    "skeleton": "",
+    "bones": 0,
+    "name": "Bloodmaw Fortress",
+    "source": "assets/source-images/Bloodmaw Fortress.png",
+    "exported": "assets/exported/Bloodmaw Fortress/Bloodmaw Fortress.glb",
+    "runtime": "assets/runtime/bloodmaw_fortress/BloodmawFortress.qml",
+    "textures": [
+      "qtmesh_gen3d_1_1788764606997_diffuse.png",
+      "qtmesh_gen3d_1_1788764606997_normal.png",
+      "qtmesh_gen3d_1_1788764606997_roughness.png"
+    ],
+    "clips": [],
+    "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
+    "status": "QtMeshEditor-generated"
+  },
+  "watchtower": {
+    "verts": 14138,
+    "tris": 9998,
+    "skeleton": "",
+    "bones": 0,
+    "name": "Watchtower",
+    "source": "assets/source-images/Watchtower.png",
+    "exported": "assets/exported/Watchtower/Watchtower.glb",
+    "runtime": "assets/runtime/watchtower/Watchtower.qml",
+    "textures": [
+      "qtmesh_gen3d_1_1788762603858_diffuse.png",
+      "qtmesh_gen3d_1_1788762603858_normal.png",
+      "qtmesh_gen3d_1_1788762603858_roughness.png"
+    ],
+    "clips": [],
+    "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
+    "status": "QtMeshEditor-generated"
+  },
+  "gate": {
+    "verts": 11420,
+    "tris": 10000,
+    "skeleton": "",
+    "bones": 0,
+    "name": "Bloodmaw Gate",
+    "source": "assets/source-images/Bloodmaw Gate.png",
+    "exported": "assets/exported/Bloodmaw Gate/Bloodmaw Gate.glb",
+    "runtime": "assets/runtime/gate/BloodmawGate.qml",
+    "textures": [
+      "qtmesh_gen3d_1_1788762833035_diffuse.png",
+      "qtmesh_gen3d_1_1788762833035_normal.png",
+      "qtmesh_gen3d_1_1788762833035_roughness.png"
+    ],
+    "clips": [],
+    "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
+    "status": "QtMeshEditor-generated"
+  },
+  "prisoner_cage": {
+    "verts": 12751,
+    "tris": 9972,
+    "skeleton": "",
+    "bones": 0,
+    "name": "Prisoner Cage",
+    "source": "assets/source-images/Prisoner Cage.png",
+    "exported": "assets/exported/Prisoner Cage/Prisoner Cage.glb",
+    "runtime": "assets/runtime/prisoner_cage/PrisonerCage.qml",
+    "textures": [
+      "qtmesh_gen3d_1_1788763477028_diffuse.png",
+      "qtmesh_gen3d_1_1788763477028_normal.png",
+      "qtmesh_gen3d_1_1788763477028_roughness.png"
+    ],
+    "clips": [],
+    "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
+    "status": "QtMeshEditor-generated"
+  },
+  "steam_vent": {
+    "verts": 13840,
+    "tris": 9760,
+    "skeleton": "",
+    "bones": 0,
+    "name": "Steam Vent",
+    "source": "assets/source-images/Steam Vent.png",
+    "exported": "assets/exported/Steam Vent/Steam Vent.glb",
+    "runtime": "assets/runtime/steam_vent/SteamVent.qml",
+    "textures": [
+      "qtmesh_gen3d_1_1788763847895_diffuse.png",
+      "qtmesh_gen3d_1_1788763847895_normal.png",
+      "qtmesh_gen3d_1_1788763847895_roughness.png"
+    ],
+    "clips": [],
+    "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
+    "status": "QtMeshEditor-generated"
+  },
+  "ruined_foundry": {
+    "verts": 15983,
+    "tris": 9802,
+    "skeleton": "",
+    "bones": 0,
+    "name": "Ruined Foundry",
+    "source": "assets/source-images/Ruined Foundry.png",
+    "exported": "assets/exported/Ruined Foundry/Ruined Foundry.glb",
+    "runtime": "assets/runtime/ruined_foundry/RuinedFoundry.qml",
+    "textures": [
+      "qtmesh_gen3d_1_1788764215166_diffuse.png",
+      "qtmesh_gen3d_1_1788764215166_normal.png",
+      "qtmesh_gen3d_1_1788764215166_roughness.png"
+    ],
+    "clips": [],
+    "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
+    "status": "QtMeshEditor-generated"
+  },
+  "iron_crown": {
+    "verts": 11952,
+    "tris": 9906,
+    "skeleton": "",
+    "bones": 0,
+    "name": "Iron Crown",
+    "source": "assets/source-images/Iron Crown.png",
+    "exported": "assets/exported/Iron Crown/Iron Crown.glb",
+    "runtime": "assets/runtime/iron_crown/IronCrown.qml",
+    "textures": [
+      "qtmesh_gen3d_1_1788764881892_diffuse.png",
+      "qtmesh_gen3d_1_1788764881892_normal.png",
+      "qtmesh_gen3d_1_1788764881892_roughness.png"
+    ],
+    "clips": [],
+    "format": "GLB (QtMeshEditor) → balsam .mesh + QML",
+    "status": "QtMeshEditor-generated"
   }
 }

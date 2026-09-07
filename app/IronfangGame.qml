@@ -126,7 +126,11 @@ Item {
         if (autotest) startMission("classic_siege", Balance.defaultDifficulty)
         else if (autotestM1) { Campaign.resetProgress(progress); startMission("m1_embers", Balance.defaultDifficulty) }
         else if (smokeMission !== "") startMission(smokeMission, Balance.defaultDifficulty)
-        else if (Qt.application.arguments.indexOf("--showcase") >= 0) phase = "showcase"
+        else if (Qt.application.arguments.indexOf("--showcase") >= 0) {
+            phase = "showcase"
+            const a = Qt.application.arguments, i = a.indexOf("--showcase")
+            if (a[i + 1] && a[i + 1].indexOf("--") !== 0) { const k = showcase.entries.findIndex(e => e.id === a[i + 1]); if (k >= 0) showcase.index = k }
+        }
     }
     // --ui-shots <lang>: walk every frontend screen in that language, screenshot each (ui-<lang>-<screen>.png), quit.
     readonly property string uiShotsLang: { const a = Qt.application.arguments; const i = a.indexOf("--ui-shots"); return i >= 0 && a[i + 1] ? a[i + 1] : "" }
@@ -1180,6 +1184,7 @@ Item {
     }
 
     AssetShowcase {
+        id: showcase
         anchors.fill: parent
         visible: game.phase === "showcase"
         assetBase: game.assetBase

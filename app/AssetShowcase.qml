@@ -21,8 +21,9 @@ Item {
         const list = []
         for (const id of ["goblin_worker", "orc_warrior", "orc_archer", "ironhide_ogre"])
             list.push({ kind: "unit", id: id, def: Assets.units[id], meta: metaFor(Assets.units[id].model) })
-        for (const id of ["clan_fortress", "war_foundry", "iron_deposit", "rocks_large", "rocks_small", "dead_tree", "broken_cart"])
-            list.push({ kind: "building", id: id, def: Assets.buildings[id], meta: metaFor(Assets.buildings[id].model) })
+        for (const id of ["clan_fortress", "war_foundry", "ruined_foundry", "enemy_fortress", "enemy_outpost", "watchtower", "gate", "prisoner_cage",
+                          "iron_deposit", "steam_vent", "rocks_large", "rocks_small", "dead_tree", "broken_cart", "iron_crown"])
+            if (Assets.buildings[id] && Assets.buildings[id].model) list.push({ kind: "building", id: id, def: Assets.buildings[id], meta: metaFor(Assets.buildings[id].model) })
         list.push({ kind: "projectile", id: "arrow", def: Assets.projectiles.arrow, meta: metaFor(Assets.projectiles.arrow.model) })
         return list
     }
