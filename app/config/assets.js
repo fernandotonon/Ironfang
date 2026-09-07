@@ -37,15 +37,21 @@ var units = {
 
 var buildings = {
     clan_fortress:  { displayName: "Clan Fortress",  model: "assets/runtime/clan_fortress/ClanFortress.qml", status: "qtmesheditor", scale: 10,  footOffset: 0.29, yawOffset: 0,  portrait: "#8a5a3a" },
-    war_foundry:    { displayName: "War Foundry",    model: "assets/runtime/war_foundry/WarFoundry.qml",     status: "qtmesheditor", scale: 8,   footOffset: 0.35, yawOffset: 90, portrait: "#7a4a3a" },
-    enemy_fortress: { displayName: "Enemy Fortress", model: "assets/runtime/clan_fortress/ClanFortress.qml", status: "qtmesheditor", scale: 10,  footOffset: 0.29, yawOffset: 180, portrait: "#8a3a3a" },
+    war_foundry:    { displayName: "War Foundry",    model: "assets/runtime/war_foundry/WarFoundry.qml",     status: "qtmesheditor", scale: 8,   footOffset: 0.35, yawOffset: 90, portrait: "#7a4a3a",
+                      ruinedModel: "assets/runtime/ruined_foundry/RuinedFoundry.qml", ruinedScale: 8, ruinedFootOffset: 0.31, ruinedYawOffset: 90 },
+    enemy_fortress: { displayName: "Bloodmaw Fortress", model: "assets/runtime/bloodmaw_fortress/BloodmawFortress.qml", status: "qtmesheditor", scale: 10, footOffset: 0.31, yawOffset: 180, portrait: "#8a3a3a" },
     iron_deposit:   { displayName: "Iron Deposit",   model: "assets/runtime/iron_deposit/IronDeposit.qml",   status: "qtmesheditor", scale: 4,   footOffset: 0.28, yawOffset: 0,  portrait: "#6a6a70" },
     rocks_large:    { displayName: "Rocks",          model: "assets/runtime/large_rocks/LargeRocks.qml",     status: "qtmesheditor", scale: 5,   footOffset: 0.46, yawOffset: 0,  portrait: "#606064" },
     rocks_small:    { displayName: "Rocks",          model: "assets/runtime/small_rocks/SmallRocks.qml",     status: "qtmesheditor", scale: 3,   footOffset: 0.29, yawOffset: 0,  portrait: "#606064" },
     dead_tree:      { displayName: "Dead Ironwood",  model: "assets/runtime/dead_tree/DeadIronwoodtree.qml", status: "qtmesheditor", scale: 6,   footOffset: 0.51, yawOffset: 0,  portrait: "#4a3a30" },
-    // placeholders (Box3D, tinted) until the QtMeshEditor models exist - docs/asset-requests.md
-    enemy_outpost:  { displayName: "Bloodmaw Outpost", model: "", status: "placeholder", scale: 1, footOffset: 0, yawOffset: 0, portrait: "#8a3a3a", placeholderColor: "#7a2f2a", placeholderHeight: 3.5 },
-    watchtower:     { displayName: "Watchtower",       model: "", status: "placeholder", scale: 1, footOffset: 0, yawOffset: 0, portrait: "#7a4a3a", placeholderColor: "#6a3a30", placeholderHeight: 6 },
+    // Bloodmaw set (generated 2026-09-07 from the new concept images)
+    enemy_outpost:  { displayName: "Bloodmaw Outpost", model: "assets/runtime/bloodmaw_outpost/BloodmawOutpost.qml", status: "qtmesheditor", scale: 6, footOffset: 0.51, yawOffset: 180, portrait: "#8a3a3a" },
+    watchtower:     { displayName: "Watchtower",       model: "assets/runtime/watchtower/Watchtower.qml",            status: "qtmesheditor", scale: 7, footOffset: 0.51, yawOffset: 0,   portrait: "#7a4a3a" },
+    gate:           { displayName: "Bloodmaw Gate",    model: "assets/runtime/gate/BloodmawGate.qml",                status: "qtmesheditor", scale: 8, footOffset: 0.24, yawOffset: 0,   portrait: "#6a4a3a" },
+    prisoner_cage:  { displayName: "Prisoner Cage",    model: "assets/runtime/prisoner_cage/PrisonerCage.qml",       status: "qtmesheditor", scale: 3, footOffset: 0.45, yawOffset: 0,   portrait: "#5a4a3a" },
+    steam_vent:     { displayName: "Steam Vent",       model: "assets/runtime/steam_vent/SteamVent.qml",             status: "qtmesheditor", scale: 4, footOffset: 0.17, yawOffset: 0,   portrait: "#6a5a4a" },
+    ruined_foundry: { displayName: "Ruined Foundry",   model: "assets/runtime/ruined_foundry/RuinedFoundry.qml",     status: "qtmesheditor", scale: 8, footOffset: 0.3, yawOffset: 90,  portrait: "#5a4a40" },
+    iron_crown:     { displayName: "Iron Crown",       model: "assets/runtime/iron_crown/IronCrown.qml",             status: "qtmesheditor", scale: 2, footOffset: 0.28, yawOffset: 0,   portrait: "#8a7a5a" },
     broken_cart:    { displayName: "Broken Cart",    model: "assets/runtime/broken_cart/BrokenCart.qml",     status: "qtmesheditor", scale: 4,   footOffset: 0.21, yawOffset: 0,  portrait: "#5a4a3a" }
 }
 

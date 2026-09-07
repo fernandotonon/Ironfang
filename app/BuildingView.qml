@@ -40,10 +40,13 @@ Node {
     readonly property real footD: stats.footprint ? stats.footprint.d : 4
     // combat treats the footprint as a disc
     readonly property real radius: Math.min(footW, footD) * 0.5
-    readonly property real modelScale: typeDef.scale !== undefined ? typeDef.scale : 1
+    readonly property bool useRuined: !productionEnabled && !!typeDef.ruinedModel
+    readonly property string modelFile: useRuined ? typeDef.ruinedModel : (typeDef.model || "")
+    readonly property real modelScale: useRuined && typeDef.ruinedScale !== undefined ? typeDef.ruinedScale : (typeDef.scale !== undefined ? typeDef.scale : 1)
+    readonly property real modelFoot: useRuined && typeDef.ruinedFootOffset !== undefined ? typeDef.ruinedFootOffset : (typeDef.footOffset || 0)
     readonly property bool depleted: stats.resource === true && iron <= 0
 
-    eulerRotation.y: typeDef.yawOffset || 0
+    eulerRotation.y: useRuined && typeDef.ruinedYawOffset !== undefined ? typeDef.ruinedYawOffset : (typeDef.yawOffset || 0)
 
     function lookAt() {}
 
@@ -53,11 +56,11 @@ Node {
 
     Loader3D {
         id: modelLoader
-        active: root.useModel && !!root.typeDef.model
-        source: !active ? "" : (root.assetBase ? root.assetBase + root.typeDef.model
-                                               : Qt.resolvedUrl(root.typeDef.model))
+        active: root.useModel && root.modelFile !== ""
+        source: !active ? "" : (root.assetBase ? root.assetBase + root.modelFile
+                                               : Qt.resolvedUrl(root.modelFile))
         scale: Qt.vector3d(root.modelScale, root.modelScale * (1 - 0.7 * root.ruin), root.modelScale)
-        y: (root.typeDef.footOffset || 0) * root.modelScale * (1 - 0.7 * root.ruin) - root.ruin * 0.4
+        y: root.modelFoot * root.modelScale * (1 - 0.7 * root.ruin) - root.ruin * 0.4
         eulerRotation.z: root.ruin * 7
         opacity: root.depleted ? 0.45 : 1
         onStatusChanged: if (status === Loader3D.Error) console.warn("BuildingView: failed to load", source)

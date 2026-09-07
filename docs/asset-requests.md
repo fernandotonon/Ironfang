@@ -6,13 +6,13 @@ the world through `config/assets.js`). Source images are produced by the project
 are then generated with QtMeshEditor (`scripts/generate-models.sh`), rigged/imported with
 `scripts/refresh-runtime.sh`.
 
-Status: ☐ requested · ◐ source image available · ● generated and in game
+Status: ☐ requested · ◐ source image available · ● generated and in game (2026-09-07: the eight Bloodmaw-set models were generated with QtMeshEditor 3.37.7 / TRELLIS.2 from the new concept images)
 
 ## 2D — illustrations and portraits
 
 | Asset | Used by | Placeholder today | Status |
 |---|---|---|---|
-| Mission illustrations ×7 (`m1`…`m7`, 16:9, ≥ 1280 px) | briefing screen, loading narration | dark panel with the mission number (`Frontend.qml`, briefing) | ☐ |
+| Mission illustrations ×7 (`m1`…`m7`, 16:9, ≥ 1280 px) | briefing screen, loading narration | dark panel with the mission number (`Frontend.qml`, briefing) | m1 ● (`assets/runtime/illustrations/m1_embers.jpg`), m4 ◐ (`m4_ashlands.jpg`, mission not authored yet), m2 m3 m5 m6 m7 ☐ |
 | Epilogue illustration (Rukhar restoring the fractured crown) | campaign end | — (M5) | ☐ |
 | Campaign map background (Karag Vorn / Ashlands region) | campaign map screen | vertical mission list | ☐ |
 | Portraits: Rukhar, Gorvak, Bloodmaw commander, goblin foreman, ogre matriarch (square, ≥ 512 px) | dialogue (M5), codex | speaker name prefix in the HUD flash | ☐ |
@@ -23,14 +23,14 @@ Status: ☐ requested · ◐ source image available · ● generated and in game
 
 | Asset | Type id (planned) | Missions | Placeholder | Status |
 |---|---|---|---|---|
-| Bloodmaw Outpost (small hostile structure, ~6×6 m) | `enemy_outpost` | 2, 6 | tinted `Box3D` | ☐ |
-| Watchtower (tall, ~3×3 m) | `watchtower` | 5, 6, 7 | tinted `Box3D` | ☐ |
-| Wooden/iron gate segment (destructible, ~8×2 m) | `gate` | 5, 6, 7 | tinted `Box3D` | ☐ |
-| Prisoner cage (rescue objective, ~3×3 m) | `prisoner_cage` | 4, 5 | tinted `Box3D` | ☐ |
-| Steam vent (hazard, ~3×3 m) | `steam_vent` | 4 | tinted `Box3D` + effect | ☐ |
-| Ruined outpost / broken foundry (Mission 1 start) | `ruined_foundry` | 1 | War Foundry model, dimmed, `productionEnabled: false` | ☐ |
-| Bloodmaw Fortress (distinct from the Clan Fortress) | `enemy_fortress` | 2–7 | Clan Fortress model rotated, red frame (already in game) | ☐ |
-| Iron Crown prop (epilogue / codex) | `iron_crown` | epilogue | — | ☐ |
+| Bloodmaw Outpost (small hostile structure, ~6×6 m) | `enemy_outpost` | 2, 6 | — | ● |
+| Watchtower (tall, ~3×3 m) | `watchtower` | 5, 6, 7 | — | ● |
+| Wooden/iron gate segment (destructible, ~8×2 m) | `gate` | 5, 6, 7 | — | ● (gameplay: M4) |
+| Prisoner cage (rescue objective, ~3×3 m) | `prisoner_cage` | 4, 5 | — | ● (gameplay: M4) |
+| Steam vent (hazard, ~4×4 m) | `steam_vent` | 4 | — | ● (hazard logic: M4) |
+| Ruined outpost / broken foundry (Mission 1 start) | `ruined_foundry` | 1 | — | ● (`war_foundry` swaps to it while `productionEnabled` is false) |
+| Bloodmaw Fortress (distinct from the Clan Fortress) | `enemy_fortress` | 2–7 | — | ● |
+| Iron Crown prop (epilogue / codex) | `iron_crown` | epilogue | — | ● (showcase; epilogue scene: M5) |
 
 Existing and in game (●): Goblin Worker, Orc Warrior, Orc Archer, Ironhide Ogre, Clan Fortress,
 War Foundry, Iron Deposit, Rocks (large/small), Dead Ironwood, Broken Cart, Arrow, weapons and

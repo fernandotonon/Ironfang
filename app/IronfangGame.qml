@@ -113,7 +113,9 @@ Item {
         const a = settings.audio
         audio.sfxVolume = a.master * a.effects
         audio.musicVolume = a.master * a.music
-        audio.soundOn = audio.platformSupported && a.master > 0 && Qt.application.arguments.indexOf("--mute") < 0 && !autotest
+        const args = Qt.application.arguments
+        // scripted runs are silent unless --sound asks for it (browser audio verification)
+        audio.soundOn = a.master > 0 && args.indexOf("--mute") < 0 && (args.indexOf("--sound") >= 0 || (!autotest && !autotestM1 && smokeMission === ""))
     }
     function resetProgress() { Campaign.resetProgress(progress); saveProgress() }
 
@@ -126,8 +128,43 @@ Item {
         else if (smokeMission !== "") startMission(smokeMission, Balance.defaultDifficulty)
         else if (Qt.application.arguments.indexOf("--showcase") >= 0) phase = "showcase"
     }
+    // --ui-shots <lang>: walk every frontend screen in that language, screenshot each (ui-<lang>-<screen>.png), quit.
+    readonly property string uiShotsLang: { const a = Qt.application.arguments; const i = a.indexOf("--ui-shots"); return i >= 0 && a[i + 1] ? a[i + 1] : "" }
+    Timer {
+        running: game.uiShotsLang !== ""
+        interval: 700; repeat: true
+        property int step: 0
+        readonly property var screens: ["menu", "campaign", "briefing", "settings", "credits", "paused", "results"]
+        onTriggered: {
+            const idx = Math.floor(step / 2), shoot = step % 2 === 1
+            if (idx >= screens.length) { Qt.quit(); return }
+            const sc = screens[idx]
+            if (!shoot) {
+                Loc.setLanguage(game.uiShotsLang)
+                if (sc === "paused") { if (phase !== "playing" && phase !== "paused") startMission("classic_siege", "warrior"); phase = "paused" }
+                else if (sc === "results") {
+                    lastResult = { missionId: "m1_embers", missionTitle: Loc.tr("mission.m1.title"), campaign: true, victory: true, time: 612, difficulty: "warchief",
+                                   unitsProduced: 7, unitsLost: 3, unitsKilled: 12, buildingsDestroyed: 1, buildingsLost: 0, ironGathered: 840,
+                                   optionalComplete: 1, optionalTotal: 1, outcomeText: "m1.victory", medal: "gold",
+                                   previousBest: { medal: "steel", time: 700 }, newlyUnlocked: ["m2_stolen_mine"], survivalUnlocked: false }
+                    phase = "victory"
+                } else {
+                    if (phase !== "title") { clearWorld(); phase = "title" }
+                    if (sc === "briefing") frontend.selectedMission = "m1_embers"
+                    frontend.screen = sc
+                }
+            } else screenshot("ui-" + game.uiShotsLang + "-" + sc)
+            step++
+        }
+    }
     // --smoke <missionId>: load a mission, run 8 s at 4x, log its state, screenshot, quit (desktop).
     readonly property string smokeMission: { const a = Qt.application.arguments; const i = a.indexOf("--smoke"); return i >= 0 && a[i + 1] ? a[i + 1] : "" }
+    readonly property string smokeCam: { const a = Qt.application.arguments; const i = a.indexOf("--cam"); return i >= 0 && a[i + 1] ? a[i + 1] : "" }
+    Timer {   // --cam x,z (with --smoke): look at that spot before the screenshot
+        running: game.smokeMission !== "" && game.smokeCam !== "" && game.phase === "playing"
+        interval: 1500; repeat: false
+        onTriggered: { const p = smokeCam.split(","); world.rig.applyState({ px: Number(p[0]), py: 0, pz: Number(p[1]), yaw: 0, pitch: 52, distance: 30 }) }
+    }
     Timer {
         running: game.smokeMission !== "" && game.phase === "playing"
         interval: 8000; repeat: false
@@ -1075,7 +1112,6 @@ Item {
         case Qt.Key_F: hud.showFps = !hud.showFps; perf.visible = !perf.visible; break
         case Qt.Key_M: useModels = !useModels; break
         case Qt.Key_N:
-            if (!audio.platformSupported) { flash("audio is not available in the browser build yet (Clayground #216)"); break }
             audio.soundOn = !audio.soundOn; if (!audio.soundOn) audio.stopMusic(); else if (phase === "playing") audio.startMusic(); flash(audio.soundOn ? "sound on" : "sound off"); break
         case Qt.Key_BracketLeft: simSpeed = Math.max(1, simSpeed / 2); flash("speed x" + simSpeed); break
         case Qt.Key_BracketRight: simSpeed = Math.min(8, simSpeed * 2); flash("speed x" + simSpeed); break

@@ -27,6 +27,14 @@ ASSETS=(
   "Dead Ironwood tree:dead_tree:DeadIronwoodtree:static"
   "Broken Cart:broken_cart:BrokenCart:static"
   "Arrow:arrow:Arrow:static"
+  "Bloodmaw Outpost:bloodmaw_outpost:BloodmawOutpost:static"
+  "Watchtower:watchtower:Watchtower:static"
+  "Bloodmaw Gate:gate:BloodmawGate:static"
+  "Prisoner Cage:prisoner_cage:PrisonerCage:static"
+  "Steam Vent:steam_vent:SteamVent:static"
+  "Ruined Foundry:ruined_foundry:RuinedFoundry:static"
+  "Bloodmaw Fortress:bloodmaw_fortress:BloodmawFortress:static"
+  "Iron Crown:iron_crown:IronCrown:static"
 )
 
 for spec in "${ASSETS[@]}"; do

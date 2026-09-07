@@ -92,7 +92,6 @@ var strings = {
     "settings.master": "Volume geral",
     "settings.music": "Música",
     "settings.effects": "Efeitos",
-    "settings.audio_web_note": "O áudio ainda não está disponível na versão para navegador; a versão para desktop tem som completo.",
     "settings.controls": "CONTROLES E ACESSIBILIDADE",
     "settings.camera_shake": "Tremor de câmera",
     "settings.high_contrast": "Seleção em alto contraste",
@@ -149,6 +148,11 @@ var strings = {
     "building.broken_cart": "Carroça Quebrada",
     "building.enemy_outpost": "Posto Avançado Bloodmaw",
     "building.watchtower": "Torre de Vigia",
+    "building.gate": "Portão Bloodmaw",
+    "building.prisoner_cage": "Jaula de Prisioneiros",
+    "building.steam_vent": "Fenda de Vapor",
+    "building.ruined_foundry": "Forja em Ruínas",
+    "building.iron_crown": "Coroa de Ferro",
 
     // ---- missões da campanha ----
     "mission.m1.title": "Brasas de Ironfang",

@@ -61,18 +61,18 @@ Item {
         property bool primary: false
         property bool usable: true
         signal clicked()
-        width: 300; height: note !== "" ? 54 : 42; radius: 5
+        width: 320; height: note !== "" ? 34 + noteText.implicitHeight + 10 : 42; radius: 5
         color: !usable ? "#221f1c" : ma.pressed ? "#7d5a2a" : (ma.containsMouse ? "#5a4222" : (primary ? "#4a3620" : "#2b2418"))
         border.color: !usable ? "#4a4038" : primary ? fe.gold : fe.edge; border.width: 1
         opacity: usable ? 1 : 0.75
         Column {
-            anchors.centerIn: parent; spacing: 2
-            Text { anchors.horizontalCenter: parent.horizontalCenter; text: mb.label; color: mb.usable ? fe.ink : fe.dim; font.pixelSize: 15; font.letterSpacing: 1 }
-            Text { visible: mb.note !== ""; anchors.horizontalCenter: parent.horizontalCenter; text: mb.note; color: fe.dim; font.pixelSize: 11 }
+            anchors.centerIn: parent; spacing: 2; width: mb.width - 24
+            Text { width: parent.width; horizontalAlignment: Text.AlignHCenter; fontSizeMode: Text.HorizontalFit; minimumPixelSize: 11; text: mb.label; color: mb.usable ? fe.ink : fe.dim; font.pixelSize: 15; font.letterSpacing: 1 }
+            Text { id: noteText; visible: mb.note !== ""; width: parent.width; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap; text: mb.note; color: fe.dim; font.pixelSize: 11; lineHeight: 1.1 }
         }
         MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; enabled: mb.usable; onClicked: mb.clicked() }
     }
-    component Heading: Text { color: fe.gold; font.pixelSize: 40; font.bold: true; font.letterSpacing: 6; anchors.horizontalCenter: parent.horizontalCenter }
+    component Heading: Text { color: fe.gold; font.pixelSize: 40; font.bold: true; font.letterSpacing: 6; anchors.horizontalCenter: parent.horizontalCenter; horizontalAlignment: Text.AlignHCenter }
     component Body: Text { color: fe.ink; font.pixelSize: 14; wrapMode: Text.WordWrap; lineHeight: 1.3 }
     component Small: Text { color: fe.faint; font.pixelSize: 12; wrapMode: Text.WordWrap }
     component Footer: Text {
@@ -84,7 +84,7 @@ Item {
         property real value: 0.5
         property string label: ""
         signal moved(real v)
-        width: 300; height: 34
+        width: 320; height: 34
         Text { text: sl.label; color: fe.ink; font.pixelSize: 13; anchors { left: parent.left; verticalCenter: parent.verticalCenter } }
         Rectangle {
             id: track; width: 150; height: 8; radius: 4; color: "#2a2620"; border.color: fe.edge
@@ -103,7 +103,7 @@ Item {
         property bool checked: false
         property string label: ""
         signal toggled(bool v)
-        width: 300; height: 30
+        width: 320; height: 30
         Text { text: tg.label; color: fe.ink; font.pixelSize: 13; anchors { left: parent.left; verticalCenter: parent.verticalCenter } }
         Rectangle {
             width: 44; height: 22; radius: 11; color: tg.checked ? "#4a3620" : "#2a2620"; border.color: tg.checked ? fe.gold : fe.edge
@@ -122,10 +122,10 @@ Item {
     Item {
         anchors.fill: parent; visible: fe.screen === "menu"
         Column {
-            anchors.centerIn: parent; spacing: 8
+            anchors.centerIn: parent; spacing: 8; width: 320
             Heading { text: "IRONFANG"; font.pixelSize: 64; font.letterSpacing: 8 }
             Text { anchors.horizontalCenter: parent.horizontalCenter; text: Loc.tr("game.subtitle"); color: fe.ink; font.pixelSize: 22; font.letterSpacing: 6 }
-            Small { anchors.horizontalCenter: parent.horizontalCenter; text: Loc.tr("game.tagline") }
+            Small { anchors.horizontalCenter: parent.horizontalCenter; width: fe.width - 40; horizontalAlignment: Text.AlignHCenter; text: Loc.tr("game.tagline") }
             Item { width: 1; height: 16 }
             MenuButton {
                 readonly property string next: (void fe.progressRev, fe.progress ? Campaign.nextMission(fe.progress) : "")
@@ -226,12 +226,22 @@ Item {
         readonly property var m: fe.briefingMission
         readonly property var info: fe.briefingInfo
         Row {
-            anchors { top: parent.top; topMargin: 36; horizontalCenter: parent.horizontalCenter }
+            id: briefRow
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: Math.max(28, (fe.height - height) / 2 - 20)
             spacing: 28
-            // illustration: dummy panel until the mission art exists (docs/asset-requests.md)
+            // illustration (mission art) or a labelled dummy panel until it exists (docs/asset-requests.md)
             Rectangle {
-                width: 340; height: 220; radius: 8; color: "#24211d"; border.color: fe.edge
+                width: 340; height: 220; radius: 8; color: "#24211d"; border.color: fe.edge; clip: true
+                readonly property string art: fe.briefingMission && fe.briefingMission.briefing.illustration ? fe.briefingMission.briefing.illustration : ""
+                Image {
+                    anchors.fill: parent; anchors.margins: 1
+                    visible: parent.art !== ""
+                    source: parent.art === "" ? "" : (fe.game && fe.game.assetBase ? fe.game.assetBase + parent.art : Qt.resolvedUrl(parent.art))
+                    fillMode: Image.PreserveAspectCrop; asynchronous: true; smooth: true
+                }
                 Column {
+                    visible: parent.art === ""
                     anchors.centerIn: parent; spacing: 6
                     Text { anchors.horizontalCenter: parent.horizontalCenter; text: parent.parent.parent.parent.info && parent.parent.parent.parent.info.number ? parent.parent.parent.parent.info.number : "⚔"; color: fe.gold; font.pixelSize: 56; font.bold: true }
                     Small { anchors.horizontalCenter: parent.horizontalCenter; text: Loc.tr("briefing.illustration_placeholder") }
@@ -266,13 +276,13 @@ Item {
                         model: Balance.difficultyOrder
                         Rectangle {
                             required property string modelData
-                            width: 150; height: 48; radius: 5
+                            width: 156; height: 56; radius: 5
                             color: fe.selectedDifficulty === modelData ? "#4a3620" : "#2b2418"
                             border.color: fe.selectedDifficulty === modelData ? fe.gold : fe.edge
                             Column {
                                 anchors.centerIn: parent; spacing: 1
                                 Text { anchors.horizontalCenter: parent.horizontalCenter; text: fe.difficultyName(parent.parent.modelData); color: fe.ink; font.pixelSize: 14 }
-                                Small { anchors.horizontalCenter: parent.horizontalCenter; text: Loc.tr("difficulty." + parent.parent.modelData + ".note"); font.pixelSize: 9; width: 144; horizontalAlignment: Text.AlignHCenter; elide: Text.ElideRight; wrapMode: Text.NoWrap }
+                                Small { anchors.horizontalCenter: parent.horizontalCenter; text: Loc.tr("difficulty." + parent.parent.modelData + ".note"); font.pixelSize: 10; width: 146; horizontalAlignment: Text.AlignHCenter; wrapMode: Text.WordWrap; lineHeight: 1.05 }
                             }
                             MouseArea { anchors.fill: parent; onClicked: fe.selectedDifficulty = parent.modelData }
                         }
@@ -335,7 +345,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter; spacing: 10
                     MenuButton {
                         readonly property string next: (void fe.progressRev, fe.progress && col.r && col.r.victory && col.r.campaign ? Campaign.nextMission(fe.progress) : "")
-                        visible: next !== ""; width: 200; primary: true; label: Loc.tr("results.next_mission")
+                        visible: next !== ""; width: 160; primary: true; label: Loc.tr("results.next_mission")
                         onClicked: { fe.selectedMission = next; fe.screen = "briefing" }
                     }
                     MenuButton { width: 160; primary: !(col.r && col.r.victory); label: Loc.tr("results.replay"); onClicked: fe.restartRequested() }
@@ -350,7 +360,7 @@ Item {
     Item {
         anchors.fill: parent; visible: fe.screen === "settings"
         Column {
-            anchors.centerIn: parent; spacing: 10
+            anchors.centerIn: parent; spacing: 10; width: 320
             Heading { text: Loc.tr("settings.title") }
             Item { width: 1; height: 8 }
             Text { text: Loc.tr("settings.language"); color: fe.gold; font.pixelSize: 13; font.bold: true }
@@ -360,7 +370,7 @@ Item {
                     model: Loc.languages
                     MenuButton {
                         required property var modelData
-                        width: 146; label: modelData.name; primary: Loc.language === modelData.code
+                        width: 156; label: modelData.name; primary: Loc.language === modelData.code
                         onClicked: { Loc.setLanguage(modelData.code); fe.settings.language = modelData.code; fe.settingsEdited() }
                     }
                 }
@@ -369,11 +379,10 @@ Item {
             Slider { label: Loc.tr("settings.master"); value: fe.settings ? fe.settings.audio.master : 1; onMoved: (v) => { fe.settings.audio.master = v; fe.settingsEdited() } }
             Slider { label: Loc.tr("settings.music"); value: fe.settings ? fe.settings.audio.music : 0.35; onMoved: (v) => { fe.settings.audio.music = v; fe.settingsEdited() } }
             Slider { label: Loc.tr("settings.effects"); value: fe.settings ? fe.settings.audio.effects : 0.8; onMoved: (v) => { fe.settings.audio.effects = v; fe.settingsEdited() } }
-            Small { visible: !fe.desktop; width: 300; text: Loc.tr("settings.audio_web_note") }
             Text { text: Loc.tr("settings.controls"); color: fe.gold; font.pixelSize: 13; font.bold: true; topPadding: 8 }
             Toggle { label: Loc.tr("settings.camera_shake"); checked: fe.settings ? fe.settings.controls.cameraShake : true; onToggled: (v) => { fe.settings.controls.cameraShake = v; fe.settingsEdited() } }
             Toggle { label: Loc.tr("settings.high_contrast"); checked: fe.settings ? fe.settings.accessibility.highContrastSelection : false; onToggled: (v) => { fe.settings.accessibility.highContrastSelection = v; fe.settingsEdited() } }
-            Small { width: 300; text: Loc.tr("settings.more_later") }
+            Small { width: 320; text: Loc.tr("settings.more_later") }
             Item { width: 1; height: 8 }
             MenuButton { label: Loc.tr("common.back"); primary: true; onClicked: fe.screen = fe.game && fe.game.phase === "paused" ? "paused" : "menu" }
         }
@@ -398,7 +407,7 @@ Item {
     Item {
         anchors.fill: parent; visible: fe.screen === "paused"
         Column {
-            anchors.centerIn: parent; spacing: 8
+            anchors.centerIn: parent; spacing: 8; width: 320
             Heading { text: Loc.tr("pause.title"); font.pixelSize: 48 }
             Item { width: 1; height: 10 }
             MenuButton { label: Loc.tr("pause.resume"); primary: true; onClicked: fe.resumeRequested() }

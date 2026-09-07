@@ -15,6 +15,7 @@ web-runtime/Main.qml (Item)               Clayground Web Runtime entry (no build
         ├── Hud.qml                       iron, objectives, selection panel, production
         ├── Frontend.qml                  main menu, campaign map, briefing, results, settings, credits, pause
         ├── Storage.qml                   save/settings persistence (QtCore Settings or a shell adapter)
+        ├── AudioController.qml           desktop: Clayground.Sound · web: WebAudio bridge (src/webaudio.cpp, browser AudioContext)
         └── PerfHud (Clayground)          render stats (F)
 Loc.qml (singleton)                        localisation: Loc.tr(key, args) over i18n/<lang>.js
 scripts/                                   rules, pure JS (.pragma library), unit-tested

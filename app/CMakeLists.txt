@@ -25,6 +25,9 @@ set_source_files_properties(Loc.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 clay_app(ironfang
     VERSION 0.2.0
 
+    SOURCES
+        src/webaudio.h src/webaudio.cpp
+
     LINK_LIBS
         Qt::Core
         Qt::Qml
@@ -85,3 +88,6 @@ if(EMSCRIPTEN)
     # (QRC) plus Qt Quick 3D need more. The heap still grows on demand (ALLOW_MEMORY_GROWTH).
     set_target_properties(ironfang PROPERTIES QT_WASM_INITIAL_MEMORY "256MB")
 endif()
+
+# C++ helpers (QML_ELEMENT types) live in src/; the generated type registration includes them by name
+target_include_directories(ironfang PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")

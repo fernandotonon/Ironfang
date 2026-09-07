@@ -9,7 +9,7 @@ var mission = {
     kind: "campaign",
     title: "mission.m1.title",
     description: "mission.m1.tagline",
-    briefing: { intro: "m1.brief" },
+    briefing: { intro: "m1.brief", illustration: "assets/runtime/illustrations/m1_embers.jpg" },
 
     map: { size: 48, camera: { x: 12, z: 40, yaw: 0, pitch: 52, distance: 34 } },
     player: { iron: 20 },

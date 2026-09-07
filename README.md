@@ -168,8 +168,9 @@ an entry in `config/assets.js` has no model). Open items:
 * No LODs, no KTX2: 1024² textures are PNG in the repo and re-encoded to JPEG for the web deploy
   (`scripts/web-optimize-assets.py`, about 23 MB of assets), no shadows.
 * Effects are flashes and rings; no particles. Clip loops are untuned (`Idle`/`Walk` seams).
-* Audio: Clayground.Sound playback (`Sound.play()` and `Music`) freezes the page on WebAssembly
-  (clayground#216), so the **web build is silent** for now; desktop has full audio (the loop is a
+* Audio: on WebAssembly the game plays through a small WebAudio bridge (`app/src/webaudio.cpp`,
+  browser AudioContext) because Clayground.Sound stalls the page there (clayground#216); the browser
+  unlocks sound on the first click. Desktop uses Clayground.Sound (the loop is a
   re-triggered `Sound`, with a small seam at the loop point).
 * Manual browser input pass on the checklist has not been done by a human yet (the scripted
   match runs in headless Chrome; see `docs/feasibility-report.md`).

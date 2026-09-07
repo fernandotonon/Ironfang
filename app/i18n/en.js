@@ -93,7 +93,6 @@ var strings = {
     "settings.master": "Master volume",
     "settings.music": "Music",
     "settings.effects": "Effects",
-    "settings.audio_web_note": "Audio is not available in the browser build yet; the desktop version has full sound.",
     "settings.controls": "CONTROLS & ACCESSIBILITY",
     "settings.camera_shake": "Camera shake",
     "settings.high_contrast": "High-contrast selection",
@@ -150,6 +149,11 @@ var strings = {
     "building.broken_cart": "Broken Cart",
     "building.enemy_outpost": "Bloodmaw Outpost",
     "building.watchtower": "Watchtower",
+    "building.gate": "Bloodmaw Gate",
+    "building.prisoner_cage": "Prisoner Cage",
+    "building.steam_vent": "Steam Vent",
+    "building.ruined_foundry": "Ruined Foundry",
+    "building.iron_crown": "Iron Crown",
 
     // ---- campaign missions ----
     "mission.m1.title": "Embers of Ironfang",

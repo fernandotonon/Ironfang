@@ -37,6 +37,11 @@ var buildings = {
     enemy_fortress: { name: "Enemy Fortress", hp: 2500, produces: [], footprint: { w: 10, d: 10 }, enemyProducer: true },
     enemy_outpost:  { name: "Bloodmaw Outpost", hp: 900, produces: [], footprint: { w: 6, d: 6 }, enemyProducer: true },
     watchtower:     { name: "Watchtower",     hp: 500,  produces: [], footprint: { w: 3, d: 3 } },
+    gate:           { name: "Bloodmaw Gate",  hp: 1200, produces: [], footprint: { w: 8, d: 2 }, destructible: true },   // M5+: blocks the path until destroyed
+    prisoner_cage:  { name: "Prisoner Cage",  hp: 0,    produces: [], footprint: { w: 3, d: 3 }, obstacle: true, rescue: true },   // M4: rescue objective
+    steam_vent:     { name: "Steam Vent",     hp: 0,    produces: [], footprint: { w: 4, d: 4 }, obstacle: true, hazard: true },   // M4: telegraphed hazard
+    ruined_foundry: { name: "Ruined Foundry", hp: 700,  produces: [], footprint: { w: 8, d: 8 } },                                  // visual of a cold foundry (also war_foundry's ruined look)
+    iron_crown:     { name: "Iron Crown",     hp: 0,    produces: [], footprint: { w: 2, d: 2 }, obstacle: true },                  // prop: epilogue / codex
     iron_deposit:   { name: "Iron Deposit",   hp: 0,    produces: [], footprint: { w: 4, d: 4 }, iron: 600, resource: true },
     rocks_large:    { name: "Rocks",          hp: 0,    produces: [], footprint: { w: 5, d: 4 }, obstacle: true },
     rocks_small:    { name: "Rocks",          hp: 0,    produces: [], footprint: { w: 3, d: 3 }, obstacle: true },
