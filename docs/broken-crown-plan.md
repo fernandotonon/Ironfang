@@ -209,3 +209,15 @@ compare with the previous milestone → fix regressions → report → separate 
 * Tests: `tests/tst_tutorial.qml` (6 cases) — 24/24 ctest entries green; `--smoke <missionId>`
   loads each mission on desktop and logs its state.
 * Balance is a first pass; external playtesting is the next gate (brief: stop after Mission 3).
+
+### Asset drop and web audio (2026-09-07)
+
+* Eight Bloodmaw-set models generated from the owner's concept images (QtMeshEditor 3.37.7,
+  TRELLIS.2 512 pipeline, 10K triangles, 1024² textures, ~4–10 min each) and imported:
+  Bloodmaw Outpost (Mission 2), Bloodmaw Fortress (replaces the rotated Clan Fortress), Watchtower,
+  Gate, Prisoner Cage, Steam Vent (used from M4/M5 on), Ruined Foundry (shown by the War Foundry
+  while it is not operational), Iron Crown (showcase / epilogue). Runtime assets 55 → 93 MB
+  (web deploy 23 → 38 MB after JPEG conversion). Mission 1 briefing illustration shipped.
+* Web audio: `app/src/webaudio.cpp` (browser AudioContext bridge, from Isabela & Pedro) replaces
+  Clayground.Sound on WebAssembly; the browser build is no longer silent.
+* UI pass in both languages via `--ui-shots <lang>`: centred menus, wrapping notes, fitting labels.

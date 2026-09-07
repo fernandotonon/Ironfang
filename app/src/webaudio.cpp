@@ -25,7 +25,11 @@ EM_JS(void, ironfang_audio_load, (const char *name, const unsigned char *data, i
     const A = Module.ironfangAudio; const ctx = A.context(); if (!ctx) return;
     const key = UTF8ToString(name);
     const bytes = HEAPU8.slice(data, data + len);          // copy out of the wasm heap before decoding
-    ctx.decodeAudioData(bytes.buffer).then(buf => { A.buffers[key] = buf; }).catch(e => console.warn("WebAudio: decode failed for", key, e));
+    ctx.decodeAudioData(bytes.buffer).then(buf => {
+        A.buffers[key] = buf;
+        // a music requested before its buffer finished decoding starts now
+        if (A.musicPending && A.musicName === key) { A.musicPending = false; A.musicOffset = 0; ironfang_audio_music_resume(); }
+    }).catch(e => console.warn("WebAudio: decode failed for", key, e));
 });
 EM_JS(void, ironfang_audio_play, (const char *name, double volume), {
     const A = Module.ironfangAudio; const ctx = A.context(); if (!ctx) return;
