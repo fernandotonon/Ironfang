@@ -1,4 +1,4 @@
-// Ironfang: First Siege - desktop / own-WASM-build entry point.
+// Ironfang: The Broken Crown - desktop / own-WASM-build entry point.
 // Built with Clayground. Forged with QtMeshEditor.
 import QtQuick
 import QtQuick.Window

@@ -1,4 +1,4 @@
-// Ironfang: First Siege - game root (an Item, so it runs both inside the desktop Window
+// Ironfang: The Broken Crown - game root (an Item, so it runs both inside the desktop Window
 // and when loaded by the Clayground Web Runtime from static files).
 // Composition: GameWorld (3D scene) + entities (UnitView/BuildingView/Projectile, created
 // imperatively) + JS rule modules (Economy, Production, Combat, Gather, EnemyAI, NavGrid,
