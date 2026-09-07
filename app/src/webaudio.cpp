@@ -14,7 +14,7 @@ EM_JS(void, ironfang_audio_init, (), {
             const Ctx = window.AudioContext || window.webkitAudioContext;
             if (!Ctx) return null;
             A.ctx = new Ctx();
-            const resume = () => { if (A.ctx && A.ctx.state === "suspended") A.ctx.resume(); };
+            const resume = () => { if (A.ctx && A.ctx.state === "suspended") A.ctx.resume().then(() => console.log("WebAudio: context resumed by user gesture")); };
             ["pointerdown", "keydown", "touchstart"].forEach(t => window.addEventListener(t, resume, { capture: true, passive: true }));
         }
         return A.ctx;
@@ -44,6 +44,7 @@ EM_JS(void, ironfang_audio_music_resume, (), {
     const gain = ctx.createGain(); gain.gain.value = Math.max(0, Math.min(1, A.musicVolume));
     src.connect(gain); gain.connect(ctx.destination); src.start(0, A.musicOffset);
     A.music = src; A.musicGain = gain; A.musicStart = ctx.currentTime - A.musicOffset; A.musicOffset = 0;
+    console.log("WebAudio: music", A.musicName, "playing (context", ctx.state + ")");
 });
 EM_JS(void, ironfang_audio_music, (const char *name, double volume, int loop), {
     const A = Module.ironfangAudio; const ctx = A.context(); if (!ctx) return;
