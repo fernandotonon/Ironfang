@@ -47,7 +47,7 @@
   const screen = document.getElementById('screen');
   const bar = document.getElementById('bar');
   const status = document.getElementById('status');
-  const WASM_BYTES = 39751159;           // uncompressed size, written at build time
+  const WASM_BYTES = 39751359;           // uncompressed size, written at build time
   const HAS_MANIFEST = true;
   const setProgress = (fraction, text) => { bar.style.width = (Math.max(0, Math.min(1, fraction)) * 100).toFixed(1) + '%'; status.textContent = text; };
   const mb = b => (b / 1048576).toFixed(1);
