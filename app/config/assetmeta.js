@@ -194,8 +194,8 @@ var assets = {
     "status": "QtMeshEditor-generated"
   },
   "dead_tree": {
-    "verts": 10404,
-    "tris": 9978,
+    "verts": 10380,
+    "tris": 9955,
     "skeleton": "",
     "bones": 0,
     "name": "Dead Ironwood tree",

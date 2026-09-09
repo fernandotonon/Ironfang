@@ -43,8 +43,8 @@ Node {
 
     // Nodes:
     Model {
-        id: qtmesh_gen3d_1_1788608453576
-        objectName: "qtmesh_gen3d_1_1788608453576"
+        id: dead_Ironwood_tree
+        objectName: "Dead Ironwood tree"
         source: "meshes/meshes_0__mesh.mesh"
         pickable: true
         materials: [

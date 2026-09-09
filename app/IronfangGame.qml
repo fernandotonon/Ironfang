@@ -167,7 +167,8 @@ Item {
     Timer {   // --cam x,z (with --smoke): look at that spot before the screenshot
         running: game.smokeMission !== "" && game.smokeCam !== "" && game.phase === "playing"
         interval: 1500; repeat: false
-        onTriggered: { const p = smokeCam.split(","); world.rig.applyState({ px: Number(p[0]), py: 0, pz: Number(p[1]), yaw: 0, pitch: 52, distance: 30 }) }
+        onTriggered: { const p = smokeCam.split(","); world.rig.applyState({ px: Number(p[0]), py: 0, pz: Number(p[1]),
+                       yaw: p[2] !== undefined ? Number(p[2]) : 0, pitch: p[3] !== undefined ? Number(p[3]) : 52, distance: p[4] !== undefined ? Number(p[4]) : 30 }) }
     }
     Timer {
         running: game.smokeMission !== "" && game.phase === "playing"
